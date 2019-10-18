@@ -1,2 +1,0 @@
-(window["webpackJsonp"]=window["webpackJsonp"]||[]).push([["about"],{ca56:function(t,n,e){"use strict";e.r(n);var i=function(){var t=this,n=t.$createElement;t._self._c;return t._m(0)},a=[function(){var t=this,n=t.$createElement,e=t._self._c||n;return e("div",{staticClass:"notifications"},[e("h1",[t._v("This is notifications page")])])}],s={},c=s,o=e("a6c2"),l=Object(o["a"])(c,i,a,!1,null,null,null);n["default"]=l.exports}}]);
-//# sourceMappingURL=about.03ca696a.js.map

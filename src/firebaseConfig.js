@@ -18,6 +18,7 @@ firebase.initializeApp(config)
 const db = firebase.firestore()
 const auth = firebase.auth()
 const currentUser = auth.currentUser
+const storageRef = firebase.storage().ref();
 
 // firebase collections
 const usersCollection = db.collection('test')
@@ -26,6 +27,7 @@ export {
     db,
     auth,
     currentUser,
-    usersCollection
+    usersCollection,
+    storageRef
   
 }

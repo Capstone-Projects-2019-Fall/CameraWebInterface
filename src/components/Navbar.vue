@@ -13,7 +13,7 @@
         <v-btn text
           v-for="(item, i) in nav"
             :key="i"
-            @click="" :to = "item.route"
+            :to = "item.route"
             > {{item.text}} </v-btn>
       </v-toolbar-items>
     </v-toolbar>
@@ -41,7 +41,7 @@
               <v-list-item
                 v-for="(item, i) in nav"
                 :key="i"
-                @click="" :to="item.route"
+                :to="item.route"
               >
                 <v-list-item-title>{{ item.text }}</v-list-item-title>
               </v-list-item>
@@ -61,7 +61,7 @@ export default {
       nav: [
         {
           text: 'Home',
-          route: '/home',
+          route: '/',
           active: true
         },
         {
@@ -71,7 +71,7 @@ export default {
         },
         {
           text: 'Live Video Stream',
-          route: '/videostream',
+          route: '/livestream',
           active: false
         },
         {
