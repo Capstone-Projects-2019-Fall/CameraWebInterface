@@ -15,6 +15,11 @@ export default {
         images: []
     }
   },
+  mounted: function() {
+    this.$nextTick(function(){
+      this.listImages();
+    })
+  },
   methods: {
     listImages: function(){
       var childRef = fb.storageRef.child('images');
