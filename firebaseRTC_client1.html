@@ -108,6 +108,14 @@
                 .then(() => sendMessage("offer", pc.localDescription));
         }
 
+        function convertToRTCSessionDescriptionInit(data){
+            let cache = {
+                type: data.type,
+                sdp: data.sdp
+            }
+            return cache;
+        }
+
         //Attaches listener to listen for signal from Raspberry Pi
         //Runs function every time it detects a change
         db.collection(dbCollection).where("sender", "==", piId)
@@ -118,6 +126,7 @@
                     console.log(data);
                     if (type = "offer") {
                         data.type = type;
+                        data = convertToRTCSessionDescriptionInit(data);
                         //If recieving an offer, set it as remote "address" for WebRTC and send an answer
                         pc.setRemoteDescription(new RTCSessionDescription(data))
                             .then(() => pc.createAnswer())
@@ -126,6 +135,7 @@
                             .then(() => sendMessage("answer", pc.localDescription));
                     } else if (type = "answer") {
                         data.type = type;
+                        data = convertToRTCSessionDescriptionInit(data);
                         //If recieving an answer, set it as remote "address" for WebRTC
                         pc.setRemoteDescription(new RTCSessionDescription(data));
                     } else if (type = "iceCandidate") {
