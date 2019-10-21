@@ -29,6 +29,11 @@ export default {
       images: []
     };
   },
+  computed:  {
+    orderedUsers: function () {
+    return _.orderBy(this.images, 'date')
+  }
+  },
   mounted: function() {
     this.$nextTick(function() {
       this.listImages();
@@ -54,7 +59,7 @@ export default {
             await imageRef
               .getMetadata()
               .then(function(metadata) {
-                image.date = new Date(metadata.timeCreated.toString());
+                image.date = new Date(metadata.timeCreated).toString();
               })
               .catch(function(error) {
               // Uh-oh, an error occurred!
