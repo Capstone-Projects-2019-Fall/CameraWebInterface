@@ -11,8 +11,8 @@
       </v-col>
     </v-row>
     <v-row align-content="center" justify="center">
-      <v-col v-for="image in images" :key="image.url">
-        <ImageCard :image="image['url']" :date="image['date']"></ImageCard>
+      <v-col v-for="image in images" :key="image.date">
+        <ImageCard :image="image.url" :date="image.date"></ImageCard>
       </v-col>
     </v-row>
   </v-container>
@@ -35,14 +35,15 @@ export default {
     });
   },
   methods: {
-    listImages: function() {
+    listImages: async function() {
+      this.images = [];
       var childRef = fb.storageRef.child("images");
-      childRef
+      await childRef
         .listAll()
         .then(result => {
-          result.items.forEach(imageRef => {
+          result.items.forEach(async imageRef => {
             let image = {};
-            imageRef
+            await imageRef
               .getDownloadURL()
               .then(imageURL => {
                 image.url = imageURL.toString();
@@ -50,7 +51,7 @@ export default {
               .catch(function(error) {
                 // Handle any errors
               });
-            imageRef
+            await imageRef
               .getMetadata()
               .then(function(metadata) {
                 image.date = metadata.timeCreated.toString();
