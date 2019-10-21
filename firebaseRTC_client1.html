@@ -116,6 +116,33 @@
             return cache;
         }
 
+        function listenIce(){
+            db.collection(dbCollection).where("sender", "==", piId)
+            .onSnapshot(function (querySnapshot) {
+                querySnapshot.forEach(function (doc) {
+                    let type = doc.data().what;
+                    let data = JSON.parse(doc.data().data);
+                    console.log(data);
+                    if (type = "iceCandidate") {
+                        //iceCandidates allow NAT Traversal so the PCs can find each other
+                        pc.addIceCandidate(new RTCIceCandidate(data));
+                        deleteRecord(doc.id);
+                    }
+                    console.log(`${doc.id} => ${doc.data().what}`);
+                });
+            });
+        }
+
+        function deleteRecord(id){
+            //Delete signal so we don't process it again
+            db.collection(dbCollection).doc(id).delete()
+                .then(function () {
+                    console.log("Document successfully deleted!");
+                }).catch(function (error) {
+                    console.error("Error removing document: ", error);
+                });
+        }
+
         //Attaches listener to listen for signal from Raspberry Pi
         //Runs function every time it detects a change
         db.collection(dbCollection).where("sender", "==", piId)
@@ -133,23 +160,16 @@
                             //Set local "address" as the answer we just created
                             .then(answer => pc.setLocalDescription(answer))
                             .then(() => sendMessage("answer", pc.localDescription));
+                            deleteRecord(doc.id);
+                            listenIce();
                     } else if (type = "answer") {
                         data.type = type;
                         data = convertToRTCSessionDescriptionInit(data);
                         //If recieving an answer, set it as remote "address" for WebRTC
                         pc.setRemoteDescription(new RTCSessionDescription(data));
-                    } else if (type = "iceCandidate") {
-                        //iceCandidates allow NAT Traversal so the PCs can find each other
-                        pc.addIceCandidate(new RTCIceCandidate(data));
+                        deleteRecord(doc.id);
+                        listenIce();
                     }
-
-                    //Delete signal so we don't process it again
-                    db.collection(dbCollection).doc(doc.id).delete()
-                        .then(function () {
-                            console.log("Document successfully deleted!");
-                        }).catch(function (error) {
-                            console.error("Error removing document: ", error);
-                        });
                     console.log(`${doc.id} => ${doc.data().what}`);
                 });
             });
