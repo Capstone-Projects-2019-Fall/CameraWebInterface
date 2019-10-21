@@ -11,15 +11,19 @@
       </v-col>
     </v-row>
     <v-row align-content="center" justify="center">
-      <v-img v-for="image in images" :key="image" :src="image.url" max-width="200"></v-img>
+      <v-col v-for="image in images" :key="image.url">
+        <ImageCard :image="image['url']" :date="image['date']"></ImageCard>
+      </v-col>
     </v-row>
   </v-container>
 </template>
 
 <script>
 const fb = require("../firebaseConfig.js");
+import ImageCard from "../components/ImageCard";
 
 export default {
+  components: { ImageCard },
   data: function() {
     return {
       images: []
@@ -37,14 +41,24 @@ export default {
         .listAll()
         .then(result => {
           result.items.forEach(imageRef => {
+            let image = {};
             imageRef
               .getDownloadURL()
               .then(imageURL => {
-                this.images.push({ url: imageURL.toString() });
+                image.url = imageURL.toString();
               })
               .catch(function(error) {
                 // Handle any errors
               });
+            imageRef
+              .getMetadata()
+              .then(function(metadata) {
+                image.date = metadata.timeCreated.toString();
+              })
+              .catch(function(error) {
+              // Uh-oh, an error occurred!
+            });
+            this.images.push(image);
           });
         })
         .catch(function(error) {
