@@ -54,7 +54,7 @@ export default {
             await imageRef
               .getMetadata()
               .then(function(metadata) {
-                image.date = metadata.timeCreated.toString();
+                image.date = new Date(metadata.timeCreated.toString());
               })
               .catch(function(error) {
               // Uh-oh, an error occurred!
