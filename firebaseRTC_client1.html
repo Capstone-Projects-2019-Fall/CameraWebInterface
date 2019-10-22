@@ -102,10 +102,11 @@
             });
         }
 
-        function connectToPi() {
-            pc.createOffer()
+        async function connectToPi() {
+            await pc.createOffer()
                 .then(offer => pc.setLocalDescription(offer))
                 .then(() => sendMessage("offer", pc.localDescription));
+            console.log(pc.localDescription);
         }
 
         function convertToRTCSessionDescriptionInit(data){
@@ -128,7 +129,7 @@
                         pc.addIceCandidate(new RTCIceCandidate(data));
                         deleteRecord(doc.id);
                     }
-                    console.log(`${doc.id} => ${doc.data().what}`);
+                    //console.log(`${doc.id} => ${doc.data().what}`);
                 });
             });
         }
@@ -150,10 +151,11 @@
                 querySnapshot.forEach(function (doc) {
                     let type = doc.data().what;
                     let data = JSON.parse(doc.data().data);
-                    console.log(data);
+                    //console.log(data);
                     if (type = "offer") {
                         data.type = type;
                         data = convertToRTCSessionDescriptionInit(data);
+                        console.log(data);
                         //If recieving an offer, set it as remote "address" for WebRTC and send an answer
                         pc.setRemoteDescription(new RTCSessionDescription(data))
                             .then(() => pc.createAnswer())
@@ -170,7 +172,7 @@
                         deleteRecord(doc.id);
                         listenIce();
                     }
-                    console.log(`${doc.id} => ${doc.data().what}`);
+                    //console.log(`${doc.id} => ${doc.data().what}`);
                 });
             });
     </script>
