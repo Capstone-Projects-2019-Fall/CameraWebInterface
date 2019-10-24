@@ -31,7 +31,7 @@ export default {
   },
   computed: {
     sortedImages: function() {
-        this.images.sort( ( a, b) => {
+        this.images.sort( ( b, a) => {
             return new Date(a.date) - new Date(b.date);
         });
         return this.images;
