@@ -11,7 +11,7 @@
       </v-col>
     </v-row>
     <v-row align-content="center" justify="center">
-      <v-col v-for="image in images" :key="image.date">
+      <v-col v-for="image in sortedImages" :key="image.date">
         <ImageCard :image="image.url" :date="image.date"></ImageCard>
       </v-col>
     </v-row>
@@ -29,10 +29,13 @@ export default {
       images: []
     };
   },
-  computed:  {
-    orderedUsers: function () {
-    return _.orderBy(this.images, 'date')
-  }
+  computed: {
+    sortedImages: function() {
+        this.images.sort( ( a, b) => {
+            return new Date(a.date) - new Date(b.date);
+        });
+        return this.images;
+    }
   },
   mounted: function() {
     this.$nextTick(function() {
