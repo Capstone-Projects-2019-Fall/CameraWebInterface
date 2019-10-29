@@ -2,12 +2,7 @@
   <v-container class="notification">
     <v-row>
       <v-col align="center">
-        <h1>This is notifications page</h1>
-      </v-col>
-    </v-row>
-    <v-row>
-      <v-col align="center">
-        <v-btn v-on:click="listImages">Click Me</v-btn>
+        <h1>Notifications</h1>
       </v-col>
     </v-row>
     <v-row align-content="center" justify="center">
