@@ -5,9 +5,9 @@
   </head>
 
   <body>
-    <video id="myVideo" autoplay muted playsinline></video>
+    <!-- <video id="myVideo" autoplay muted playsinline></video> -->
     <video id="piVideo" autoplay muted playsinline></video>
-    <button onclick="connectToPi()" type="button">Call</button>
+    <!-- <button onclick="connectToPi()" type="button">Call</button> -->
 
     <!-- The core Firebase JS SDK is always required and must be listed first -->
     <script src="https://www.gstatic.com/firebasejs/7.1.0/firebase-app.js"></script>
@@ -51,8 +51,8 @@
       };
       var pc = new RTCPeerConnection(servers);
       const dbCollection = "webrtctest";
-      var myVideo = document.getElementById("piVideo");
-      var piVideo = document.getElementById("myVideo");
+      var myVideo = document.getElementById("myVideo");
+      var piVideo = document.getElementById("piVideo");
       var myId = "PiTest";
       var piId = "MyId";
 
@@ -66,6 +66,7 @@
           : console.log("Sent All Ice");
       //If WebRTC detects a stream added on other side, set video to that stream
       pc.onaddstream = event => (piVideo.srcObject = event.stream);
+      
 
       function hasUserMedia() {
         //check if the browser supports the WebRTC
@@ -89,8 +90,8 @@
             audio: true
           },
           function(stream) {
-            myVideo.srcObject = stream;
-            pc.addStream(stream);
+            //myVideo.srcObject = stream;
+            // pc.addStream(stream);
           },
           function(err) {}
         );
