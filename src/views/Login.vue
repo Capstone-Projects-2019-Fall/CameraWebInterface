@@ -30,7 +30,7 @@
                 <v-col sm="12">
                   <v-text-field
                     v-model="input.password"
-                    :append-icon="show ? 'visibility' : 'visibility_off'"
+                    :append-icon="show ? 'mdi-eye' : 'mdi-eye-off'"
                     :rules="[rules.required]"
                     :type="show ? 'text' : 'password'"
                     label="Password"
