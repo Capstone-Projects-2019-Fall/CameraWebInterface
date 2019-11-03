@@ -72,7 +72,7 @@
         if(pc.iceConnectionState == 'disconnected') {
           hasLocalDesc = false;
           hasRemoteDesc = false;
-          
+          piVideo.srcObject = null;
           console.log('Disconnected');
         }
       }
