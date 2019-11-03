@@ -59,6 +59,15 @@
       let hasLocalDesc = false;
       let hasRemoteDesc = false;
 
+      pc.oniceconnectionstatechange = function() {
+        if(pc.iceConnectionState == 'disconnected') {
+          hasLocalDesc = false;
+          hasRemoteDesc = false;
+          
+          console.log('Disconnected');
+        }
+      }
+
       //Send local ice candidates
       pc.onicecandidate = event =>
         event.candidate

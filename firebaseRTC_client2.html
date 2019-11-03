@@ -56,6 +56,7 @@
       var myId = "PiTest";
       var piId = "MyId";
 
+      
       let hasLocalDesc = false;
       let hasRemoteDesc = false;
 
@@ -66,6 +67,15 @@
           : console.log("Sent All Ice");
       //If WebRTC detects a stream added on other side, set video to that stream
       pc.onaddstream = event => (piVideo.srcObject = event.stream);
+
+      pc.oniceconnectionstatechange = function() {
+        if(pc.iceConnectionState == 'disconnected') {
+          hasLocalDesc = false;
+          hasRemoteDesc = false;
+          
+          console.log('Disconnected');
+        }
+      }
       
 
       function hasUserMedia() {
