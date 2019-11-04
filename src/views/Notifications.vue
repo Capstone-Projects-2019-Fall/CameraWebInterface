@@ -5,7 +5,7 @@
         <h1>Notifications</h1>
       </v-col>
     </v-row>
-    <v-row align-content="center" justify="center">
+    <v-row align="start" align-content="center" justify="center">
       <v-col v-for="image in sortedImages" :key="image.date">
         <ImageCard :image="image.url" :date="image.date"></ImageCard>
       </v-col>
