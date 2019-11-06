@@ -25,7 +25,8 @@
         <v-toolbar-title class="font-weight-black">  <v-img
       src="../assets/mspi.png"
       aspect-ratio="1"
-      class="grey lighten-1"
+      max-height="30px"
+      contain
       ></v-img>MSPi</v-toolbar-title>
         <v-spacer></v-spacer>
           <v-menu bottom left>
