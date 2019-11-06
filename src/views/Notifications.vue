@@ -7,7 +7,7 @@
     </v-row>
     <v-row align-content="center" justify="center">
       <v-col v-for="image in sortedImages" :key="image.date">
-        <ImageCard :image="image.url" :date="image.date"></ImageCard>
+        <ImageCard :image="image.url" :date="image.date" :name="image.name"></ImageCard>
       </v-col>
     </v-row>
   </v-container>
@@ -58,6 +58,7 @@ export default {
               .getMetadata()
               .then(function(metadata) {
                 image.date = new Date(metadata.timeCreated).toString();
+                image.name = metadata.getName().toString();
               })
               .catch(function(error) {
               // Uh-oh, an error occurred!
