@@ -11,24 +11,32 @@
 </template>
 
 <script>
-//import videojs from 'video.js';
+import { async } from 'q';
+
 const fb = require("../firebaseConfig.js");
 
 export default {
 	name: "VideoCard",
 	data() {
 		return {
-      videoURL: 'https://firebasestorage.googleapis.com/v0/b/mspi-a4b75.appspot.com/o/videos%2F2019-11-04%2021%3A14%3A24.592645.mp4?alt=media&token=64eeb249-2b27-4e65-9129-1ceeb9606dd3'
+      videoURL: ''
 		};
   },
+
    methods: {
-    updateVideo: function () {
-      var childRef = fb.storageRef.child("videos/2019-11-04 21:37:41.753790.h264");
-      console.log(childRef.getDownloadURL().toString());
-      return this.videoURL  = childRef.getDownloadURL().toString();
+    updateVideo: async function () {
+      var childRef = fb.storageRef.child("videos/2019-11-05 19:41:24.735057.mp4");
+      await childRef.getDownloadURL()
+              .then(async fileURL => {
+                this.videoURL =  fileURL.toString();
+                console.log(this.videoURL);
+              })
     }
   },
- 
+  async created () {
+    await this.updateVideo();
+    console.log(this.videoURL);
+  }
 };
 
 </script>

@@ -3,14 +3,17 @@
     <v-img :src="image" max-width="200px" @click.stop="dialog = true"
 ></v-img>
     <v-card-subtitle>{{date}}</v-card-subtitle>
+               <v-card-title class="headline">{{name}}</v-card-title>
+
     <v-dialog
         v-model="dialog"
         max-width="800"
       >
         <v-card>
           <v-card-title class="headline">{{date}}</v-card-title>
+           <v-card-title class="headline">{{name}}</v-card-title>
 
-         <VideoCard />
+         <VideoCard :name = "name"/>
 
         <v-card-actions>
           <v-spacer></v-spacer>
@@ -45,13 +48,18 @@ export default {
     title: {
       type: String,
       default: "Title"
+    },
+      name: {
+      type: String,
+      default: ""
     }
+
 
   },
   data () {
     return {
-      dialog: false,
-     
+      dialog: false
+      
     }
   },
 
