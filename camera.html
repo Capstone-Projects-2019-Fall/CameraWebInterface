@@ -54,8 +54,11 @@
         //   var myVideo = document.getElementById("myVideo");
         //   var piVideo = document.getElementById("piVideo");
         var cameraId = "Pi1";
-        var clientId = "";
 
+        //Should fetch from firebase
+        var clientId = "TestClient1";
+
+        //Variable that holds the ice candidate listener.
         let iceListener;
 
 
@@ -68,13 +71,15 @@
             sendMessage("iceCandidate", event.candidate) :
             console.log("Sent All Ice");
         //If WebRTC detects a stream added on other side, set video to that stream
-        pc.onaddstream = event => (piVideo.srcObject = event.stream);
+        // pc.onaddstream = event => (piVideo.srcObject = event.stream);
 
         pc.oniceconnectionstatechange = function () {
             if (pc.iceConnectionState == 'disconnected') {
                 hasLocalDesc = false;
                 hasRemoteDesc = false;
                 pc = new RTCPeerConnection(servers);
+
+                //Disconnects listener since we don't have a connnection
                 iceListener();
                 //   piVideo.srcObject = null;
                 console.log('Disconnected');
@@ -100,7 +105,7 @@
             //enabling video and audio channels
             navigator.getUserMedia({
                     video: true,
-                    audio: true
+                    audio: false
                 },
                 function (stream) {
                     //myVideo.srcObject = stream;
@@ -112,13 +117,7 @@
             alert("WebRTC is not supported");
         }
 
-        // //Query database collection
-        // db.collection(dbCollection).get().then((querySnapshot) => {
-        //     querySnapshot.forEach((doc) => {
-        //         console.log(`${doc.id} => ${doc.data()}`);
-        //     });
-        // });
-
+        //Send message to firebase
         function sendMessage(type, data, options = {}) {
             let d = JSON.stringify(data);
             db.collection(dbCollection).add({
@@ -129,6 +128,8 @@
             });
         }
 
+        //RTCSessionDescription requires a RTCSessionDescriptionInit object to be created
+        //This makes sure the object is correctly structured
         function convertToRTCSessionDescriptionInit(data) {
             let cache = {
                 type: data.type,
@@ -146,7 +147,7 @@
                         let data = JSON.parse(doc.data().data);
                         console.log(data);
                         if (type == "iceCandidate") {
-                            //iceCandidates allow NAT Traversal so the PCs can find each other
+                            //iceCandidates allow NAT Traversal so the two sides can find each other
                             pc.addIceCandidate(new RTCIceCandidate(data));
                             deleteRecord(doc.id);
                             console.log("Recieved Ice");
@@ -169,19 +170,24 @@
                 });
         }
 
-        //Attaches listener to listen for signal from Raspberry Pi
+        //Attaches listener to listen for connetion from client
         //Runs function every time it detects a change
         db.collection(dbCollection)
             .where("sender", "==", clientId)
             .onSnapshot(function (querySnapshot) {
+
+                //If Pi doesn't have a local 'address' yet, create one
                 if (!hasLocalDesc) {
                     await pc
                         .createOffer()
                         .then(offer => pc.setLocalDescription(offer))
+                        //Puts local 'address' into firebase for client to retrieve
                         .then(() => sendMessage("offer", pc.localDescription));
                     console.log("Sent offer:" + pc.localDescription);
                     hasLocalDesc = true;
                 }
+
+                //Searched database for response from the offer we sent
                 querySnapshot.forEach(function (doc) {
                     let type = doc.data().what;
                     let data = JSON.parse(doc.data().data);
@@ -189,11 +195,13 @@
                     if (type == "answer" && !hasRemoteDesc) {
                         data.type = type;
                         data = convertToRTCSessionDescriptionInit(data);
-                        //If recieving an answer, set it as remote "address" for WebRTC
+                        //If recieving an answer to our offer, set it as remote "address" for WebRTC
                         pc.setRemoteDescription(new RTCSessionDescription(data));
                         deleteRecord(doc.id);
                         hasRemoteDesc = true;
                         console.log("Recieved answer");
+
+                        //We should have an address now, so we can start listening to ICE objects from client
                         listenIce();
                     }
                     //console.log(`${doc.id} => ${doc.data().what}`);
