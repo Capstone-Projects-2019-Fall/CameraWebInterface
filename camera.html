@@ -178,7 +178,7 @@
 
                 //If Pi doesn't have a local 'address' yet, create one
                 if (!hasLocalDesc) {
-                    await pc
+                    pc
                         .createOffer()
                         .then(offer => pc.setLocalDescription(offer))
                         //Puts local 'address' into firebase for client to retrieve
