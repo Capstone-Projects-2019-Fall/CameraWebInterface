@@ -115,7 +115,7 @@
                 },
                 function (stream) {
                     //myVideo.srcObject = stream;
-                    // pc.addStream(stream);
+                    pc.addStream(stream);
                 },
                 function (err) {}
             );
@@ -181,7 +181,7 @@
         //Runs function every time it detects a change
         db.collection(dbCollection)
             .where("sender", "==", clientId)
-            .onSnapshot(function (querySnapshot) {
+            .onSnapshot((querySnapshot) => {
 
                 //If Pi doesn't have a local 'address' yet, create one
                 if (!hasLocalDesc) {
@@ -192,7 +192,8 @@
                         .then(() => sendMessage("offer", pc.localDescription))
                         .then(() => console.log("Sent offer:"))
                         .then(() => console.log(pc.localDescription))
-                        .then(() => hasLocalDesc = true);
+                        .then(() => hasLocalDesc = true)
+                        .catch(() => console.log("Offer failed to be created"));
                 }
 
                 //Searched database for response from the offer we sent
@@ -204,8 +205,9 @@
                         data.type = type;
                         data = convertToRTCSessionDescriptionInit(data);
                         //If recieving an answer to our offer, set it as remote "address" for WebRTC
-                        pc.setRemoteDescription(new RTCSessionDescription(data));
-                        deleteRecord(doc.id);
+                        pc.setRemoteDescription(new RTCSessionDescription(data))
+                        .then(() => deleteRecord(doc.id))
+                        .catch(() => console.log("Answer failed to be set"));
                         hasRemoteDesc = true;
                         console.log("Recieved answer:");
                         console.log(data);
