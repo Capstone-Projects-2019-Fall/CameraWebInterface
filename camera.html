@@ -7,7 +7,7 @@
 
 <body>
     <!-- <video id="myVideo" autoplay muted playsinline></video> -->
-    <!-- <video id="piVideo" autoplay muted playsinline></video> -->
+    <video id="piVideo" autoplay playsinline></video>
     <!-- <button onclick="connectToPi()" type="button">Call</button> -->
 
     <!-- The core Firebase JS SDK is always required and must be listed first -->
@@ -53,7 +53,7 @@
         var pc = new RTCPeerConnection(servers);
         const dbCollection = "webrtctest";
         //   var myVideo = document.getElementById("myVideo");
-        //   var piVideo = document.getElementById("piVideo");
+          var piVideo = document.getElementById("piVideo");
         var cameraId = "Pi1";
 
         //Should fetch from firebase
@@ -72,8 +72,9 @@
             sendMessage("iceCandidate", event.candidate) :
             console.log("Sent All Ice");
         //If WebRTC detects a stream added on other side, set video to that stream
-        // pc.onaddstream = event => (piVideo.srcObject = event.stream);
+        pc.onaddstream = event => (piVideo.srcObject = event.stream);
 
+        //If disconnected, reset webrtc
         pc.oniceconnectionstatechange = function () {
             console.log("Ice state:" + pc.iceConnectionState);
             if (pc.iceConnectionState == 'disconnected') {
@@ -87,11 +88,12 @@
                     event.candidate ?
                     sendMessage("iceCandidate", event.candidate) :
                     console.log("Sent All Ice");
-
+                    pc.onaddstream = event => (piVideo.srcObject = event.stream);
                 //Disconnects listener since we don't have a connnection
                 iceListener();
-                //   piVideo.srcObject = null;
+                piVideo.srcObject = null;
                 console.log('Disconnected');
+                initLocal();
             }
         }
 
@@ -104,39 +106,42 @@
                 navigator.mozGetUserMedia
             );
         }
+        
+        function initLocal() {
+            if (hasUserMedia()) {
+                navigator.getUserMedia =
+                    navigator.getUserMedia ||
+                    navigator.webkitGetUserMedia ||
+                    navigator.mozGetUserMedia;
 
-        if (hasUserMedia()) {
-            navigator.getUserMedia =
-                navigator.getUserMedia ||
-                navigator.webkitGetUserMedia ||
-                navigator.mozGetUserMedia;
-
-            //enabling video and audio channels
-            navigator.getUserMedia({
-                    video: true,
-                    audio: true
-                },
-                function (stream) {
-                    //myVideo.srcObject = stream;
-                    pc.addStream(stream);
-                    //If Pi doesn't have a local 'address' yet, create one
-                if (!hasLocalDesc) {
-                    pc
-                        .createOffer()
-                        .then(offer => pc.setLocalDescription(offer))
-                        //Puts local 'address' into firebase for client to retrieve
-                        .then(() => sendMessage("offer", pc.localDescription))
-                        .then(() => console.log("Sent offer:"))
-                        .then(() => console.log(pc.localDescription))
-                        .then(() => hasLocalDesc = true)
-                        .catch(() => console.log("Offer failed to be created"));
-                }
-                },
-                function (err) {}
-            );
-        } else {
-            alert("WebRTC is not supported");
+                //enabling video and audio channels
+                navigator.getUserMedia({
+                        video: true,
+                        audio: true
+                    },
+                    function (stream) {
+                        //myVideo.srcObject = stream;
+                        pc.addStream(stream);
+                        //If Pi doesn't have a local 'address' yet, create one
+                    if (!hasLocalDesc) {
+                        pc
+                            .createOffer()
+                            .then(offer => pc.setLocalDescription(offer))
+                            //Puts local 'address' into firebase for client to retrieve
+                            .then(() => sendMessage("offer", pc.localDescription))
+                            .then(() => console.log("Sent offer:"))
+                            .then(() => console.log(pc.localDescription))
+                            .then(() => hasLocalDesc = true)
+                            .catch(() => console.log("Offer failed to be created"));
+                    }
+                    },
+                    function (err) {}
+                );
+            } else {
+                alert("WebRTC is not supported");
+            }
         }
+
 
         //Send message to firebase
         function sendMessage(type, data, options = {}) {
