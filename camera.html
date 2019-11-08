@@ -121,7 +121,7 @@
         function sendMessage(type, data, options = {}) {
             let d = JSON.stringify(data);
             db.collection(dbCollection).add({
-                sender: myId,
+                sender: cameraId,
                 what: type,
                 data: d,
                 options: options
