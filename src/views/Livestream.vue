@@ -22,21 +22,23 @@
 <script>
 const db = require("../firebaseConfig.js").db;
 
+//TODO: Implement lock mechanism so one account on multiple pcs can't access
+
 export default {
   data() {
     return {
       items: ["Test"],
-      clientId: "TestClinet1",
+      clientId: "TestClient1",
       cameraId: "Pi1",
       hasLocalDesc: false,
       hasRemoteDesc: false,
       servers: {
         iceServers: [
           {
-            urls: "stun:stun.services.mozilla.com"
+            urls: "stun:stun.l.google.com:19302"
           },
           {
-            urls: "stun:stun.l.google.com:19302"
+            urls: "stun:stun.services.mozilla.com"
           },
           {
             urls: "turn:numb.viagenie.ca",
@@ -45,13 +47,13 @@ export default {
           }
         ]
       },
-      pc: "",
+      pc: null,
       dbCollection: "webrtctest"
     };
   },
   created: function() {
     this.pc = new RTCPeerConnection(this.servers);
-    this.pc.oniceconnectionstatechange = function() {
+    this.pc.oniceconnectionstatechange = () => {
       if (this.pc.iceConnectionState == "disconnected") {
         this.hasLocalDesc = false;
         this.hasRemoteDesc = false;
@@ -63,7 +65,7 @@ export default {
     //Send local ice candidates
     this.pc.onicecandidate = event =>
       event.candidate
-        ? sendMessage("iceCandidate", event.candidate)
+        ? this.sendMessage("iceCandidate", event.candidate)
         : console.log("Sent All Ice");
   },
   mounted: function() {
@@ -79,9 +81,9 @@ export default {
           video: false,
           audio: true
         },
-        function(stream) {
+        (stream) => {
           // myVideo.srcObject = stream;
-          // pc.addStream(stream);
+          this.pc.addStream(stream);
         },
         function(err) {}
       );
@@ -90,7 +92,23 @@ export default {
     }
 
     //If WebRTC detects a stream added on other side, set video to that stream
-    this.pc.onaddstream = event => (piVideo.srcObject = event.stream);
+    this.pc.onaddstream = event => (document.getElementById("piVideo").srcObject = event.stream);
+    this.listen();
+  },
+  beforeDestroy: function() {
+    //Remove all remaining traces of this client sending signal
+    //Maybe should be moved to created instead
+    db.collection(this.dbCollection)
+      .where("sender", "==", this.clientId)
+      .get()
+      .then(function(querySnapshot) {
+        querySnapshot.forEach(function(doc) {
+          doc.ref.delete();
+        });
+      })
+      .catch(function(error) {
+        console.log("Error getting documents: ", error);
+      });
   },
   methods: {
     hasUserMedia: function() {
@@ -111,14 +129,14 @@ export default {
       });
     },
     connectToPi: async function() {
-      if (!this.hasLocalDesc) {
-        await this.pc
-          .createOffer()
-          .then(offer => this.pc.setLocalDescription(offer))
-          .then(() => this.sendMessage("offer", this.pc.localDescription));
-        console.log("Sent offer:" + this.pc.localDescription);
-        this.hasLocalDesc = true;
-      }
+      // if (!this.hasLocalDesc) {
+      //   await this.pc
+      //     .createOffer()
+      //     .then(offer => this.pc.setLocalDescription(offer))
+      //     .then(() => this.sendMessage("offer", this.pc.localDescription));
+      //   console.log("Sent offer:" + this.pc.localDescription);
+      //   this.hasLocalDesc = true;
+      // }
     },
     deleteRecord: function(id) {
       //Delete signal so we don't process it again
@@ -140,10 +158,12 @@ export default {
       return cache;
     },
     listenIce: function() {
+      console.log(this.pc.connectionState);
+      console.log("Listening for ice");
       db.collection(this.dbCollection)
         .where("sender", "==", this.cameraId)
-        .onSnapshot(function(querySnapshot) {
-          querySnapshot.forEach(function(doc) {
+        .onSnapshot((querySnapshot) => {
+          querySnapshot.forEach((doc) => {
             let type = doc.data().what;
             let data = JSON.parse(doc.data().data);
             console.log(data);
@@ -156,6 +176,39 @@ export default {
             //console.log(`${doc.id} => ${doc.data().what}`);
           });
         });
+    },
+    listen: function() {
+      db.collection(this.dbCollection)
+        .where("sender", "==", this.cameraId)
+        .onSnapshot(querySnapshot => {
+          querySnapshot.forEach(doc => {
+            this.getCalls(doc);
+          });
+        });
+    },
+    getCalls: function(doc) {
+      let type = doc.data().what;
+      let data = JSON.parse(doc.data().data);
+      //console.log(data);
+      //Wait for answer from camera after we sent offer
+      if (type == "offer" && !this.hasLocalDesc && !this.hasRemoteDesc) {
+        data.type = type;
+        data = this.convertToRTCSessionDescriptionInit(data);
+        console.log(data);
+        //If recieving an offer, set it as remote "address" for WebRTC and send an answer
+        this.pc
+          .setRemoteDescription(new RTCSessionDescription(data))
+          .then(() => this.pc.createAnswer())
+          //Set local "address" as the answer we just created
+          .then(answer => this.pc.setLocalDescription(answer))
+          .then(() => this.sendMessage("answer", this.pc.localDescription));
+        this.deleteRecord(doc.id);
+        this.hasLocalDesc = true;
+        this.hasRemoteDesc = true;
+        console.log("Recieved offer, sent answer");
+        this.listenIce();
+      }
+      //console.log(`${doc.id} => ${doc.data().what}`);
     }
   }
 };
