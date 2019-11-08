@@ -77,7 +77,13 @@
             if (pc.iceConnectionState == 'disconnected') {
                 hasLocalDesc = false;
                 hasRemoteDesc = false;
+
+                //Resets RTC object
                 pc = new RTCPeerConnection(servers);
+                pc.onicecandidate = event =>
+                    event.candidate ?
+                    sendMessage("iceCandidate", event.candidate) :
+                    console.log("Sent All Ice");
 
                 //Disconnects listener since we don't have a connnection
                 iceListener();
@@ -139,6 +145,7 @@
         }
 
         function listenIce() {
+            console.log("Listening for ice")
             iceListener = db.collection(dbCollection)
                 .where("sender", "==", clientId)
                 .onSnapshot(function (querySnapshot) {
@@ -183,7 +190,8 @@
                         .then(offer => pc.setLocalDescription(offer))
                         //Puts local 'address' into firebase for client to retrieve
                         .then(() => sendMessage("offer", pc.localDescription))
-                        .then(() => console.log("Sent offer:" + pc.localDescription))
+                        .then(() => console.log("Sent offer:"))
+                        .then(() => console.log(pc.localDescription))
                         .then(() => hasLocalDesc = true);
                 }
 
@@ -199,7 +207,8 @@
                         pc.setRemoteDescription(new RTCSessionDescription(data));
                         deleteRecord(doc.id);
                         hasRemoteDesc = true;
-                        console.log("Recieved answer");
+                        console.log("Recieved answer:");
+                        console.log(data);
 
                         //We should have an address now, so we can start listening to ICE objects from client
                         listenIce();
