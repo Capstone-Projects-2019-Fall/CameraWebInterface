@@ -58,7 +58,7 @@ export default {
               .getMetadata()
               .then(function(metadata) {
                 image.date = new Date(metadata.timeCreated).toString();
-                image.name = metadata.getName().toString();
+                image.name = metadata.name.toString();
               })
               .catch(function(error) {
               // Uh-oh, an error occurred!
