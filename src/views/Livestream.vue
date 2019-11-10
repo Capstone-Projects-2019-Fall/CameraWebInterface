@@ -20,7 +20,7 @@
 </template>
 
 <style>
-.livestream{
+.livestream {
   min-width: 100%;
   max-width: 100%;
 }
@@ -56,6 +56,7 @@ export default {
       },
       pc: null,
       cameraListener: null,
+      iceListener: null,
       dbCollection: "webrtctest"
     };
   },
@@ -107,9 +108,16 @@ export default {
   },
   beforeDestroy: function() {
     //Remove all remaining traces of this client sending signal
-    //Maybe should be moved to created instead
     //Only works if view is destroyed, which doesn't include webpage exit
-    cleanUp();
+    this.cleanUp();
+    //this.$emit('hangup');
+    if (this.cameraListener !== null) {
+      this.cameraListener();
+    }
+    if (this.iceListener !== null) {
+      this.iceListener();
+    }
+
     this.sendMessage("hangup");
   },
   methods: {
@@ -165,7 +173,8 @@ export default {
     listenIce: function() {
       console.log(this.pc.connectionState);
       console.log("Listening for ice");
-      db.collection(this.dbCollection)
+      this.iceListener = db
+        .collection(this.dbCollection)
         .where("sender", "==", this.cameraId)
         .onSnapshot(querySnapshot => {
           querySnapshot.forEach(doc => {
@@ -183,7 +192,8 @@ export default {
         });
     },
     listen: function() {
-      this.cameraListener = db.collection(this.dbCollection)
+      this.cameraListener = db
+        .collection(this.dbCollection)
         .where("sender", "==", this.cameraId)
         .onSnapshot(querySnapshot => {
           querySnapshot.forEach(doc => {
