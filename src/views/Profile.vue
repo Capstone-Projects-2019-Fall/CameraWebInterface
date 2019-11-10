@@ -4,7 +4,6 @@
       <v-col>
         <v-card>
           <v-card-title>Profile</v-card-title>
-          <!-- <v-card-text v-if="user.loggedIn">Email: {{user.data.email}}</v-card-text> -->
           <v-card-text>
             <div class="container">
               <v-row>
@@ -75,19 +74,17 @@ export default {
   methods: {
     editEmail() {
       this.disableEditEmail = !this.disableEditEmail;
-      // console.log(this.user.data.uid);
     },
     updateEmail() {
       var fbUser = fb.auth.currentUser;
-      //   console.log(this.user.data.email);
       var newEmail = this.input.email;
 
       fbUser
         .updateEmail(this.input.email)
         .then(() => {
           // Update successful.
-
-          // Create a reference to the SF doc.
+          // Now update the record in the database
+          // Create a reference to the db doc.
           var docRef = fb.db.collection("users").doc(this.user.data.uid);
 
           fb.db
@@ -105,13 +102,12 @@ export default {
               console.log("email changed in db to ", newEmail);
             })
             .catch(function(err) {
-              // This will be an "population is too big" error.
               console.error(err);
             });
 
           console.log("email change succeeded");
           store.dispatch("fetchUser", fbUser);
-          //   console.log(this.user.data.email);
+          
           this.disableEditEmail = !this.disableEditEmail;
           this.error = "Email successfully changed!";
         })
