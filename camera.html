@@ -60,6 +60,8 @@
         //Variable that holds the ice candidate listener.
         let iceListener = null;
 
+        //Livestream Object
+        let pc = null;
 
         let hasLocalDesc = false;
         let hasRemoteDesc = false;
@@ -101,7 +103,9 @@
             hasLocalDesc = false;
             hasRemoteDesc = false;
 
-            pc.close();
+            if (pc !== null){
+                pc.close();
+            }
             //Resets RTC object
             pc = new RTCPeerConnection(servers);
 
