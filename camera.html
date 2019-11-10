@@ -84,7 +84,9 @@
         // }
 
         //Runs once to remove any previous traces of calls
-        db.collection(dbCollection)
+        removeTraces();
+        function removeTraces(){
+            db.collection(dbCollection)
             .where("sender", "==", cameraId)
             .get()
             .then(function (querySnapshot) {
@@ -95,6 +97,7 @@
             .catch(function (error) {
                 console.log("Error getting documents: ", error);
             });
+        }
 
         //On first init cameraStream is null
         let cameraStream = null;
@@ -109,6 +112,7 @@
             if (pc !== null){
                 pc.close();
             }
+            removeTraces();
             //Resets RTC object
             pc = new RTCPeerConnection(servers);
 
