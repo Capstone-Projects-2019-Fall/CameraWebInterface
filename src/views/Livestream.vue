@@ -6,18 +6,25 @@
       </v-card-title>
 
       <v-card-title class="justify-center">
-        <v-card height="600px" width="600px">
-          <video id="piVideo" autoplay muted playsinline></video>
+        <v-card width="600px">
+          <video id="piVideo" class="livestream" autoplay muted playsinline></video>
           <!-- <v-img src="../assets/mspi.png"
           ></v-img>-->
         </v-card>
       </v-card-title>
       <v-card-actions class="justify-center">
-        <v-btn small color="primary" :click="connectToPi()">Start Video Stream</v-btn>
+        <!-- <v-btn small color="primary" :click="connectToPi()">Start Video Stream</v-btn> -->
       </v-card-actions>
     </v-card>
   </v-app>
 </template>
+
+<style>
+.livestream{
+  min-width: 100%;
+  max-width: 100%;
+}
+</style>
 
 <script>
 const db = require("../firebaseConfig.js").db;
@@ -48,10 +55,12 @@ export default {
         ]
       },
       pc: null,
+      cameraListener: null,
       dbCollection: "webrtctest"
     };
   },
   created: function() {
+    this.cleanUp();
     this.pc = new RTCPeerConnection(this.servers);
     this.pc.oniceconnectionstatechange = () => {
       if (this.pc.iceConnectionState == "disconnected") {
@@ -81,7 +90,7 @@ export default {
           video: false,
           audio: true
         },
-        (stream) => {
+        stream => {
           // myVideo.srcObject = stream;
           this.pc.addStream(stream);
         },
@@ -92,25 +101,16 @@ export default {
     }
 
     //If WebRTC detects a stream added on other side, set video to that stream
-    this.pc.onaddstream = event => (document.getElementById("piVideo").srcObject = event.stream);
+    this.pc.onaddstream = event =>
+      (document.getElementById("piVideo").srcObject = event.stream);
     this.listen();
   },
   beforeDestroy: function() {
     //Remove all remaining traces of this client sending signal
     //Maybe should be moved to created instead
     //Only works if view is destroyed, which doesn't include webpage exit
-    db.collection(this.dbCollection)
-      .where("sender", "==", this.clientId)
-      .get()
-      .then(function(querySnapshot) {
-        querySnapshot.forEach(function(doc) {
-          doc.ref.delete();
-        });
-      })
-      .catch(function(error) {
-        console.log("Error getting documents: ", error);
-      });
-      this.sendMessage("hangup");
+    cleanUp();
+    this.sendMessage("hangup");
   },
   methods: {
     hasUserMedia: function() {
@@ -130,15 +130,18 @@ export default {
         options: options
       });
     },
-    connectToPi: async function() {
-      // if (!this.hasLocalDesc) {
-      //   await this.pc
-      //     .createOffer()
-      //     .then(offer => this.pc.setLocalDescription(offer))
-      //     .then(() => this.sendMessage("offer", this.pc.localDescription));
-      //   console.log("Sent offer:" + this.pc.localDescription);
-      //   this.hasLocalDesc = true;
-      // }
+    cleanUp: function() {
+      db.collection(this.dbCollection)
+        .where("sender", "==", this.clientId)
+        .get()
+        .then(function(querySnapshot) {
+          querySnapshot.forEach(function(doc) {
+            doc.ref.delete();
+          });
+        })
+        .catch(function(error) {
+          console.log("Error getting documents: ", error);
+        });
     },
     deleteRecord: function(id) {
       //Delete signal so we don't process it again
@@ -164,8 +167,8 @@ export default {
       console.log("Listening for ice");
       db.collection(this.dbCollection)
         .where("sender", "==", this.cameraId)
-        .onSnapshot((querySnapshot) => {
-          querySnapshot.forEach((doc) => {
+        .onSnapshot(querySnapshot => {
+          querySnapshot.forEach(doc => {
             let type = doc.data().what;
             let data = JSON.parse(doc.data().data);
             console.log(data);
@@ -180,7 +183,7 @@ export default {
         });
     },
     listen: function() {
-      db.collection(this.dbCollection)
+      this.cameraListener = db.collection(this.dbCollection)
         .where("sender", "==", this.cameraId)
         .onSnapshot(querySnapshot => {
           querySnapshot.forEach(doc => {
@@ -192,7 +195,7 @@ export default {
       let type = doc.data().what;
       let data = JSON.parse(doc.data().data);
       //console.log(data);
-      //Wait for answer from camera after we sent offer
+      //Searches for offer from camera
       if (type == "offer" && !this.hasLocalDesc && !this.hasRemoteDesc) {
         data.type = type;
         data = this.convertToRTCSessionDescriptionInit(data);
