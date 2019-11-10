@@ -263,7 +263,7 @@
                     let type = doc.data().what;
                     let data = JSON.parse(doc.data().data);
                     //console.log(data);
-                    if (type == "answer" && !hasRemoteDesc) {
+                    if (type == "answer" && !hasRemoteDesc && !resetLock) {
                         data.type = type;
                         data = convertToRTCSessionDescriptionInit(data);
                         //If recieving an answer to our offer, set it as remote "address" for WebRTC
