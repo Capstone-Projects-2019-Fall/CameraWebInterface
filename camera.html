@@ -82,8 +82,8 @@
         // }
 
         //Runs once to remove any previous traces of calls
-        db.collection(this.dbCollection)
-            .where("sender", "==", this.cameraId)
+        db.collection(dbCollection)
+            .where("sender", "==", cameraId)
             .get()
             .then(function (querySnapshot) {
                 querySnapshot.forEach(function (doc) {
