@@ -85,18 +85,19 @@
 
         //Runs once to remove any previous traces of calls
         removeTraces();
-        function removeTraces(){
+
+        function removeTraces() {
             db.collection(dbCollection)
-            .where("sender", "==", cameraId)
-            .get()
-            .then(function (querySnapshot) {
-                querySnapshot.forEach(function (doc) {
-                    doc.ref.delete();
+                .where("sender", "==", cameraId)
+                .get()
+                .then(function (querySnapshot) {
+                    querySnapshot.forEach(function (doc) {
+                        doc.ref.delete();
+                    });
+                })
+                .catch(function (error) {
+                    console.log("Error getting documents: ", error);
                 });
-            })
-            .catch(function (error) {
-                console.log("Error getting documents: ", error);
-            });
         }
 
         //On first init cameraStream is null
@@ -113,9 +114,9 @@
             hasLocalDesc = false;
             hasRemoteDesc = false;
 
-            if (pc !== null){
-                pc.close();
-            }
+            // if (pc !== null){
+            //     pc.close();
+            // }
             removeTraces();
             //Resets RTC object
             pc = new RTCPeerConnection(servers);
@@ -128,7 +129,10 @@
             pc.oniceconnectionstatechange = function () {
                 console.log("Ice state:" + pc.iceConnectionState);
                 if (pc.iceConnectionState == 'disconnected') {
-                    reset();
+                    if (!resetLock) {
+                        resetLock = true;
+                        reset();
+                    }
                 }
             }
             //Disconnects listener since we don't have a connnection
@@ -151,7 +155,7 @@
         }
 
         function initLocal(cameraStream) {
-            if (cameraStream !== null){
+            if (cameraStream !== null) {
                 addStream(cameraStream);
                 //pc.restartIce();
             }
@@ -176,21 +180,21 @@
                     function (err) {}
                 );
 
-                function addStream(stream){
-                        //myVideo.srcObject = stream;
-                        pc.addStream(stream);
-                        //If Pi doesn't have a local 'address' yet, create one
-                        if (!hasLocalDesc) {
-                            pc
-                                .createOffer()
-                                .then(offer => pc.setLocalDescription(offer))
-                                //Puts local 'address' into firebase for client to retrieve
-                                .then(() => sendMessage("offer", pc.localDescription))
-                                .then(() => console.log("Sent offer:"))
-                                .then(() => console.log(pc.localDescription))
-                                .then(() => hasLocalDesc = true)
-                                .catch(() => console.log("Offer failed to be created"));
-                        }
+                function addStream(stream) {
+                    //myVideo.srcObject = stream;
+                    pc.addStream(stream);
+                    //If Pi doesn't have a local 'address' yet, create one
+                    if (!hasLocalDesc) {
+                        pc
+                            .createOffer()
+                            .then(offer => pc.setLocalDescription(offer))
+                            //Puts local 'address' into firebase for client to retrieve
+                            .then(() => sendMessage("offer", pc.localDescription))
+                            .then(() => console.log("Sent offer:"))
+                            .then(() => console.log(pc.localDescription))
+                            .then(() => hasLocalDesc = true)
+                            .catch(() => console.log("Offer failed to be created"));
+                    }
                 }
             } else {
                 alert("WebRTC is not supported");
@@ -278,7 +282,7 @@
                         listenIce();
                     } else if (type == "hangup") {
                         deleteRecord(doc.id);
-                        if (!resetLock){
+                        if (!resetLock) {
                             resetLock = true;
                             reset();
                         }
