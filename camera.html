@@ -102,6 +102,10 @@
         //On first init cameraStream is null
         let cameraStream = null;
 
+
+        //Pseudo lock to make sure we can't have parallel resets
+        let resetLock = true;
+
         //First init
         reset();
 
@@ -134,6 +138,7 @@
             piVideo.srcObject = null;
             console.log('Disconnected');
             initLocal(cameraStream);
+            resetLock = false;
         }
 
         function hasUserMedia() {
@@ -273,7 +278,10 @@
                         listenIce();
                     } else if (type == "hangup") {
                         deleteRecord(doc.id);
-                        reset();
+                        if (!resetLock){
+                            resetLock = true;
+                            reset();
+                        }
                     }
                     //console.log(`${doc.id} => ${doc.data().what}`);
                 });
