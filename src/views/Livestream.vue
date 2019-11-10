@@ -13,7 +13,15 @@
         </v-card>
       </v-card-title>
       <v-card-actions class="justify-center">
-        <!-- <v-btn small color="primary" :click="connectToPi()">Start Video Stream</v-btn> -->
+        <v-btn
+          v-if="!isStreaming"
+          small
+          color="primary"
+          @click="listenPi(); loading = true;"
+          :loading="loading"
+          :disabled="loading"
+        >Start Video Stream</v-btn>
+        <v-btn v-else small color="error" @click="hangup()">Hang Up</v-btn>
       </v-card-actions>
     </v-card>
   </v-app>
@@ -34,6 +42,7 @@ const db = require("../firebaseConfig.js").db;
 export default {
   data() {
     return {
+      loading: false,
       items: ["Test"],
       clientId: "TestClient1",
       cameraId: "Pi1",
@@ -57,7 +66,8 @@ export default {
       pc: null,
       cameraListener: null,
       iceListener: null,
-      dbCollection: "webrtctest"
+      dbCollection: "webrtctest",
+      isStreaming: false
     };
   },
   created: function() {
@@ -65,9 +75,9 @@ export default {
     this.pc = new RTCPeerConnection(this.servers);
     this.pc.oniceconnectionstatechange = () => {
       if (this.pc.iceConnectionState == "disconnected") {
-        this.hasLocalDesc = false;
-        this.hasRemoteDesc = false;
-
+        // this.hasLocalDesc = false;
+        // this.hasRemoteDesc = false;
+        // this.hangup();
         console.log("Disconnected");
       }
     };
@@ -102,25 +112,40 @@ export default {
     }
 
     //If WebRTC detects a stream added on other side, set video to that stream
-    this.pc.onaddstream = event =>
-      (document.getElementById("piVideo").srcObject = event.stream);
-    this.listen();
+    this.pc.onaddstream = event => {
+      console.log("Stream added");
+      document.getElementById("piVideo").srcObject = event.stream;
+      this.isStreaming = true;
+      this.loading = false;
+    };
   },
   beforeDestroy: function() {
     //Remove all remaining traces of this client sending signal
     //Only works if view is destroyed, which doesn't include webpage exit
-    this.cleanUp();
-    //this.$emit('hangup');
-    if (this.cameraListener !== null) {
-      this.cameraListener();
-    }
-    if (this.iceListener !== null) {
-      this.iceListener();
-    }
-
-    this.sendMessage("hangup");
+    this.hangup();
   },
   methods: {
+    hangup: async function() {
+      if (document.getElementById("piVideo") !== null) {
+        document.getElementById("piVideo").srcObject = null;
+      }
+      await this.cleanUp();
+      if (this.cameraListener !== null) {
+        console.log("Turning off camera listener");
+        await this.cameraListener();
+      }
+      if (this.iceListener !== null) {
+        console.log("Turning off ice listener");
+        await this.iceListener();
+      }
+
+      await this.sendMessage("hangup");
+
+      this.hasLocalDesc = false;
+      this.hasRemoteDesc = false;
+
+      this.isStreaming = false;
+    },
     hasUserMedia: function() {
       //check if the browser supports the WebRTC
       return !!(
@@ -138,8 +163,8 @@ export default {
         options: options
       });
     },
-    cleanUp: function() {
-      db.collection(this.dbCollection)
+    cleanUp: async function() {
+      await db.collection(this.dbCollection)
         .where("sender", "==", this.clientId)
         .get()
         .then(function(querySnapshot) {
@@ -191,7 +216,8 @@ export default {
           });
         });
     },
-    listen: function() {
+    listenPi: function() {
+      console.log("ListenPi function fired");
       this.cameraListener = db
         .collection(this.dbCollection)
         .where("sender", "==", this.cameraId)
@@ -201,7 +227,7 @@ export default {
           });
         });
     },
-    getCalls: function(doc) {
+    getCalls: async function(doc) {
       let type = doc.data().what;
       let data = JSON.parse(doc.data().data);
       //console.log(data);
@@ -211,20 +237,23 @@ export default {
         data = this.convertToRTCSessionDescriptionInit(data);
         console.log(data);
         //If recieving an offer, set it as remote "address" for WebRTC and send an answer
-        this.pc
+        await this.pc
           .setRemoteDescription(new RTCSessionDescription(data))
           .then(() => this.pc.createAnswer())
           //Set local "address" as the answer we just created
           .then(answer => this.pc.setLocalDescription(answer))
-          .then(() => this.sendMessage("answer", this.pc.localDescription));
-        this.deleteRecord(doc.id);
-        this.hasLocalDesc = true;
-        this.hasRemoteDesc = true;
+          .then(() => this.sendMessage("answer", this.pc.localDescription))
+          .then(() => {
+            this.hasLocalDesc = true;
+            this.hasRemoteDesc = true;
+          })
+          .then(() => this.deleteRecord(doc.id))
+          .then(() => this.listenIce());
         console.log("Recieved offer, sent answer");
-        this.listenIce();
       }
       //console.log(`${doc.id} => ${doc.data().what}`);
     }
-  }
+  },
+  watch: {}
 };
 </script>
