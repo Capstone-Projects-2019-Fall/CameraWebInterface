@@ -96,6 +96,9 @@
                 console.log("Error getting documents: ", error);
             });
 
+        //On first init cameraStream is null
+        let cameraStream = null;
+
         //First init
         reset();
 
@@ -126,7 +129,7 @@
             }
             piVideo.srcObject = null;
             console.log('Disconnected');
-            initLocal(stream);
+            initLocal(cameraStream);
         }
 
         function hasUserMedia() {
@@ -138,8 +141,6 @@
             );
         }
 
-        //On first init cameraStream is null
-        let cameraStream = null;
         function initLocal(cameraStream) {
             if (cameraStream !== null){
                 addStream(cameraStream);
