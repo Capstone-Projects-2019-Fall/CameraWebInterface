@@ -36,8 +36,7 @@
 
         var db = firebase.firestore();
         var servers = {
-            iceServers: [
-                {
+            iceServers: [{
                     urls: "stun:stun.l.google.com:19302"
                 },
                 {
@@ -50,53 +49,80 @@
                 }
             ]
         };
-        var pc = new RTCPeerConnection(servers);
         const dbCollection = "webrtctest";
         //   var myVideo = document.getElementById("myVideo");
-          var piVideo = document.getElementById("piVideo");
+        var piVideo = document.getElementById("piVideo");
         var cameraId = "Pi1";
 
         //Should fetch from firebase
         var clientId = "TestClient1";
 
         //Variable that holds the ice candidate listener.
-        let iceListener;
+        let iceListener = null;
 
 
         let hasLocalDesc = false;
         let hasRemoteDesc = false;
 
-        //Send local ice candidates
-        pc.onicecandidate = event =>
-            event.candidate ?
-            sendMessage("iceCandidate", event.candidate) :
-            console.log("Sent All Ice");
-        //If WebRTC detects a stream added on other side, set video to that stream
-        pc.onaddstream = event => (piVideo.srcObject = event.stream);
+        // var pc = new RTCPeerConnection(servers);
+        // //Send local ice candidates
+        // pc.onicecandidate = event =>
+        //     event.candidate ?
+        //     sendMessage("iceCandidate", event.candidate) :
+        //     console.log("Sent All Ice");
+        // //If WebRTC detects a stream added on other side, set video to that stream
+        // pc.onaddstream = event => (piVideo.srcObject = event.stream);
 
-        //If disconnected, reset webrtc
-        pc.oniceconnectionstatechange = function () {
-            console.log("Ice state:" + pc.iceConnectionState);
-            if (pc.iceConnectionState == 'disconnected') {
-                hasLocalDesc = false;
-                hasRemoteDesc = false;
+        // //If disconnected, reset webrtc
+        // pc.oniceconnectionstatechange = function () {
+        //     console.log("Ice state:" + pc.iceConnectionState);
+        //     if (pc.iceConnectionState == 'disconnected') {
+        //         reset();
+        //     }
+        // }
 
-                //Resets RTC object
-                pc = new RTCPeerConnection(servers);
-                
-                pc.onicecandidate = event =>
-                    event.candidate ?
-                    sendMessage("iceCandidate", event.candidate) :
-                    console.log("Sent All Ice");
-                    pc.onaddstream = event => (piVideo.srcObject = event.stream);
-                //Disconnects listener since we don't have a connnection
-                iceListener();
-                piVideo.srcObject = null;
-                console.log('Disconnected');
-                initLocal();
+        //Runs once to remove any previous traces of calls
+        db.collection(this.dbCollection)
+            .where("sender", "==", this.cameraId)
+            .get()
+            .then(function (querySnapshot) {
+                querySnapshot.forEach(function (doc) {
+                    doc.ref.delete();
+                });
+            })
+            .catch(function (error) {
+                console.log("Error getting documents: ", error);
+            });
+
+        //First init
+        reset();
+
+        function reset() {
+            hasLocalDesc = false;
+            hasRemoteDesc = false;
+
+            //Resets RTC object
+            pc = new RTCPeerConnection(servers);
+
+            pc.onicecandidate = event =>
+                event.candidate ?
+                sendMessage("iceCandidate", event.candidate) :
+                console.log("Sent All Ice");
+            pc.onaddstream = event => (piVideo.srcObject = event.stream);
+            pc.oniceconnectionstatechange = function () {
+                console.log("Ice state:" + pc.iceConnectionState);
+                if (pc.iceConnectionState == 'disconnected') {
+                    reset();
+                }
             }
+            //Disconnects listener since we don't have a connnection
+            if (iceListener !== null) {
+                iceListener();
+            }
+            piVideo.srcObject = null;
+            console.log('Disconnected');
+            initLocal();
         }
-
 
         function hasUserMedia() {
             //check if the browser supports the WebRTC
@@ -106,7 +132,7 @@
                 navigator.mozGetUserMedia
             );
         }
-        
+
         function initLocal() {
             if (hasUserMedia()) {
                 navigator.getUserMedia =
@@ -116,24 +142,27 @@
 
                 //enabling video and audio channels
                 navigator.getUserMedia({
-                        video: true,
+                        video: {
+                            width: 1280,
+                            height: 720
+                        },
                         audio: true
                     },
                     function (stream) {
                         //myVideo.srcObject = stream;
                         pc.addStream(stream);
                         //If Pi doesn't have a local 'address' yet, create one
-                    if (!hasLocalDesc) {
-                        pc
-                            .createOffer()
-                            .then(offer => pc.setLocalDescription(offer))
-                            //Puts local 'address' into firebase for client to retrieve
-                            .then(() => sendMessage("offer", pc.localDescription))
-                            .then(() => console.log("Sent offer:"))
-                            .then(() => console.log(pc.localDescription))
-                            .then(() => hasLocalDesc = true)
-                            .catch(() => console.log("Offer failed to be created"));
-                    }
+                        if (!hasLocalDesc) {
+                            pc
+                                .createOffer()
+                                .then(offer => pc.setLocalDescription(offer))
+                                //Puts local 'address' into firebase for client to retrieve
+                                .then(() => sendMessage("offer", pc.localDescription))
+                                .then(() => console.log("Sent offer:"))
+                                .then(() => console.log(pc.localDescription))
+                                .then(() => hasLocalDesc = true)
+                                .catch(() => console.log("Offer failed to be created"));
+                        }
                     },
                     function (err) {}
                 );
@@ -213,14 +242,17 @@
                         data = convertToRTCSessionDescriptionInit(data);
                         //If recieving an answer to our offer, set it as remote "address" for WebRTC
                         pc.setRemoteDescription(new RTCSessionDescription(data))
-                        .then(() => deleteRecord(doc.id))
-                        .catch(() => console.log("Answer failed to be set"));
+                            .then(() => deleteRecord(doc.id))
+                            .catch(() => console.log("Answer failed to be set"));
                         hasRemoteDesc = true;
                         console.log("Recieved answer:");
                         console.log(data);
 
                         //We should have an address now, so we can start listening to ICE objects from client
                         listenIce();
+                    } else if (type == "hangup") {
+                        deleteRecord(doc.id);
+                        reset();
                     }
                     //console.log(`${doc.id} => ${doc.data().what}`);
                 });
