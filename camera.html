@@ -101,6 +101,7 @@
             hasLocalDesc = false;
             hasRemoteDesc = false;
 
+            pc.close();
             //Resets RTC object
             pc = new RTCPeerConnection(servers);
 
@@ -121,7 +122,7 @@
             }
             piVideo.srcObject = null;
             console.log('Disconnected');
-            initLocal();
+            initLocal(stream);
         }
 
         function hasUserMedia() {
@@ -133,7 +134,13 @@
             );
         }
 
-        function initLocal() {
+        //On first init cameraStream is null
+        let cameraStream = null;
+        function initLocal(cameraStream) {
+            if (cameraStream !== null){
+                addStream(cameraStream);
+                pc.restartIce();
+            }
             if (hasUserMedia()) {
                 navigator.getUserMedia =
                     navigator.getUserMedia ||
@@ -149,6 +156,13 @@
                         audio: true
                     },
                     function (stream) {
+                        cameraStream = stream;
+                        addStream(cameraStream);
+                    },
+                    function (err) {}
+                );
+
+                function addStream(stream){
                         //myVideo.srcObject = stream;
                         pc.addStream(stream);
                         //If Pi doesn't have a local 'address' yet, create one
@@ -163,9 +177,7 @@
                                 .then(() => hasLocalDesc = true)
                                 .catch(() => console.log("Offer failed to be created"));
                         }
-                    },
-                    function (err) {}
-                );
+                }
             } else {
                 alert("WebRTC is not supported");
             }
