@@ -3,7 +3,6 @@
     <v-img :src="image" max-width="200px" @click.stop="dialog = true"
 ></v-img>
     <v-card-subtitle>{{date}}</v-card-subtitle>
-               <v-card-title class="headline">{{name}}</v-card-title>
 
     <v-dialog
         v-model="dialog"
@@ -11,9 +10,8 @@
       >
         <v-card>
           <v-card-title class="headline">{{date}}</v-card-title>
-           <v-card-title class="headline">{{name}}</v-card-title>
 
-         <VideoCard :name = "name"/>
+         <VideoCard :name = "name" :imageURL = "image"/>
 
         <v-card-actions>
           <v-spacer></v-spacer>
