@@ -98,6 +98,7 @@ export default {
   beforeDestroy: function() {
     //Remove all remaining traces of this client sending signal
     //Maybe should be moved to created instead
+    //Only works if view is destroyed, which doesn't include webpage exit
     db.collection(this.dbCollection)
       .where("sender", "==", this.clientId)
       .get()
@@ -109,6 +110,7 @@ export default {
       .catch(function(error) {
         console.log("Error getting documents: ", error);
       });
+      this.sendMessage("hangup");
   },
   methods: {
     hasUserMedia: function() {
@@ -119,7 +121,7 @@ export default {
         navigator.mozGetUserMedia
       );
     },
-    sendMessage: function(type, data, options = {}) {
+    sendMessage: function(type, data = "", options = {}) {
       let d = JSON.stringify(data);
       db.collection(this.dbCollection).add({
         sender: this.clientId,
