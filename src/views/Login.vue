@@ -18,9 +18,9 @@
               <v-row>
                 <v-col sm="12">
                   <v-text-field
-                    v-model="input.username"
+                    v-model="input.email"
                     :rules="[rules.required]"
-                    label="Username"
+                    label="Email"
                     required
                     dense
                   ></v-text-field>
@@ -42,9 +42,10 @@
               </v-row>
               <v-row>
                 <v-col offset-sm="8">
-                  <v-btn small left color="primary" :click="login">Submit</v-btn>
+                  <v-btn small left color="primary" @click="login">Submit</v-btn>
                 </v-col>
               </v-row>
+              <div v-if="error" class="alert alert-danger">{{error}}</div>
             </div>
           </v-card-text>
         </v-card>
@@ -55,6 +56,8 @@
 </template>
 
 <script>
+const fb = require("../firebaseConfig.js");
+
 export default {
   name: "Login",
   data() {
@@ -67,11 +70,23 @@ export default {
       rules: {
         required: value => !!value || "Required.",
         emailMatch: () => "The email and password you entered don't match"
-      }
+      },
+      error: null
     };
   },
   methods: {
-    login() {}
+    login() {
+      // console.log('log in button clicked');
+      // console.log('email provided: ' + this.input.email);
+      fb.auth
+        .signInWithEmailAndPassword(this.input.email, this.input.password)
+        .then(data => {
+          this.$router.replace({ name: "profile" });
+        })
+        .catch(err => {
+          this.error = err.message;
+        });
+    }
   }
 };
 </script>

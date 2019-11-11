@@ -16,6 +16,9 @@
             :key="i"
             :to = "item.route"
             > {{item.text}} </v-btn>
+        <v-btn v-if="user.loggedIn"
+                :to='"/profile"' >Profile</v-btn>    
+        <v-btn v-if="user.loggedIn" @click="signOut">Sign Out</v-btn>
       </v-toolbar-items>
     </v-toolbar>
     
@@ -56,6 +59,9 @@
 </template>
 
 <script>
+import { mapGetters } from "vuex";
+const fb = require("../firebaseConfig.js");
+
 export default {
   data () {
     return {
@@ -82,6 +88,23 @@ export default {
           active: false
         }
       ]
+    }
+  },
+  computed: {
+    ...mapGetters({
+// map `this.user` to `this.$store.getters.user`
+      user: "user"
+    })
+  },
+  methods: {
+    signOut() {
+      fb.auth
+        .signOut()
+        .then(() => {
+          this.$router.replace({
+            name: "home"
+          });
+        });
     }
   }
 }
