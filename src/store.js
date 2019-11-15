@@ -1,11 +1,14 @@
 import Vue from "vue";
 import Vuex from "vuex";
+const db = require("firebaseConfig.js").db;
+
 Vue.use(Vuex);
 export default new Vuex.Store({
   state: {
     user: {
       loggedIn: false,
-      data: null
+      data: null,
+      cameras: null
     }
   },
   getters: {
@@ -19,6 +22,18 @@ export default new Vuex.Store({
     },
     SET_USER(state, data) {
       state.user.data = data;
+
+      await db.collection("users")
+        .where("iserId", "==", state.user.data.uid)
+        .get()
+        .then(function(querySnapshot) {
+          querySnapshot.forEach(function(doc) {
+            state.user.cameras = doc.data().cameraIds;
+          });
+        })
+        .catch(function(error) {
+          console.log("Error getting user: ", error);
+        });
     }
   },
   actions: {
