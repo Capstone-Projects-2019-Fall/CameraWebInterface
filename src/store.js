@@ -1,7 +1,6 @@
 import Vue from "vue";
 import Vuex from "vuex";
-const db = require("firebaseConfig.js").db;
-
+const fb = require('./firebaseConfig.js')
 Vue.use(Vuex);
 export default new Vuex.Store({
   state: {
@@ -12,10 +11,10 @@ export default new Vuex.Store({
     }
   },
   getters: {
-    user(state){
+    user(state) {
       return state.user;
     },
-    cameras(state){
+    cameras(state) {
       return state.user.data.cameraIds;
     }
   },
@@ -26,18 +25,21 @@ export default new Vuex.Store({
     SET_USER(state, data) {
       state.user.data = data;
 
-      await db.collection("users")
-        .where("iserId", "==", state.user.data.uid)
-        .get()
-        .then(function(querySnapshot) {
-          querySnapshot.forEach(function(doc) {
-            state.user.cameras = doc.data().cameraIds;
+      if (data != null) {
+        fb.db.collection("users")
+          .where("iserId", "==", state.user.data.uid)
+          .get()
+          .then(function (querySnapshot) {
+            querySnapshot.forEach(function (doc) {
+              state.user.cameras = doc.data().cameraIds;
+            });
+          })
+          .catch(function (error) {
+            console.log("Error getting user: ", error);
           });
-        })
-        .catch(function(error) {
-          console.log("Error getting user: ", error);
-        });
+      }
     }
+
   },
   actions: {
     fetchUser({ commit }, user) {
