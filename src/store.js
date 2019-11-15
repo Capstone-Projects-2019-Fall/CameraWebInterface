@@ -13,7 +13,10 @@ export default new Vuex.Store({
   },
   getters: {
     user(state){
-      return state.user
+      return state.user;
+    },
+    cameras(state){
+      return state.user.data.cameraIds;
     }
   },
   mutations: {
