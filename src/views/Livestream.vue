@@ -1,19 +1,16 @@
 <template>
   <v-app>
-    <div>
-      <v-select
-        v-model="cameraId"
-        :items="store.getters.cameras"
-        menu-props="auto"
-        label="Select Camera"
-        hide-details
-        prepend-icon="camera"
-        single-line
-      ></v-select>
-    </div>
     <v-card class="mx-auto">
       <v-card-title>
-        <!-- <v-select :items="items" label="Select Camera" dense outlined></v-select> -->
+        <v-select
+          v-model="cameraId"
+          :items="$store.getters.cameraIds"
+          menu-props="auto"
+          label="Select Camera"
+          hide-details
+          prepend-icon="mdi-camera"
+          single-line
+        ></v-select>
       </v-card-title>
 
       <v-card-title class="justify-center">
@@ -50,6 +47,7 @@
 
 <script>
 const db = require("../firebaseConfig.js").db;
+import store from "../store";
 
 //TODO: Implement lock mechanism so one account on multiple pcs can't access
 
@@ -248,6 +246,31 @@ export default {
     },
     listenPi: function() {
       console.log("ListenPi function fired");
+
+      //Checking if the camera is unlock in database (valid to be used for webrtc)
+      db.collection(this.dbCollection)
+        .where("sender", "==", this.cameraId)
+        .where("what", "==", "unlock")
+        .get()
+        .then(function(querySnapshot) {
+          querySnapshot.forEach(function(doc) {
+            if (doc.exists) {
+              //alert("Doc exists");
+              this.deleteRecord(doc.id);
+              this.sendMessage("lock", this.cameraId);
+            } else {
+              // doc.data() will be undefined in this case
+              console.log("No such document!");
+              alert("Camera currently not online");
+              this.loading = false;
+              return;
+            }
+          });
+        })
+        .catch(function(error) {
+          console.log("Error getting document:", error);
+        });
+
       this.cameraListener = db
         .collection(this.dbCollection)
         .where("sender", "==", this.cameraId)

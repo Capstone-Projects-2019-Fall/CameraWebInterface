@@ -7,15 +7,15 @@ export default new Vuex.Store({
     user: {
       loggedIn: false,
       data: null,
-      cameras: null
+      cameraIds: []
     }
   },
   getters: {
     user(state) {
       return state.user;
     },
-    cameras(state) {
-      return state.user.data.cameraIds;
+    cameraIds(state) {
+      return state.user.cameraIds;
     }
   },
   mutations: {
@@ -27,16 +27,18 @@ export default new Vuex.Store({
 
       if (data != null) {
         fb.db.collection("users")
-          .where("iserId", "==", state.user.data.uid)
+          .doc(state.user.data.uid)
           .get()
-          .then(function (querySnapshot) {
-            querySnapshot.forEach(function (doc) {
-              state.user.cameras = doc.data().cameraIds;
-            });
-          })
-          .catch(function (error) {
-            console.log("Error getting user: ", error);
-          });
+          .then(function(doc) {
+            if (doc.exists) {
+                state.user.cameraIds = doc.data().cameraIds;
+            } else {
+                // doc.data() will be undefined in this case
+                console.log("No such document!");
+            }
+        }).catch(function(error) {
+            console.log("Error getting document:", error);
+        });
       }
     }
 
