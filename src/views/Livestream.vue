@@ -145,7 +145,7 @@ export default {
         await this.iceListener();
       }
 
-      await this.sendMessage("hangup", this.prevCameraId);
+      await this.sendMessage("hangup","", this.prevCameraId);
 
       this.hasLocalDesc = false;
       this.hasRemoteDesc = false;
@@ -164,7 +164,7 @@ export default {
       //Send local ice candidates
       this.pc.onicecandidate = event =>
         event.candidate
-          ? this.sendMessage("iceCandidate", event.candidate)
+          ? this.sendMessage("iceCandidate", event.candidate, this.cameraId)
           : console.log("Sent All Ice");
 
       //If WebRTC detects a stream added on other side, set video to that stream
@@ -183,12 +183,13 @@ export default {
         navigator.mozGetUserMedia
       );
     },
-    sendMessage: function(type, data = "", options = {}) {
+    sendMessage: function(type, data = "", target="", options = {}) {
       let d = JSON.stringify(data);
       db.collection(this.dbCollection).add({
         sender: this.clientId,
         what: type,
         data: d,
+        target: target,
         options: options
       });
     },
@@ -231,6 +232,7 @@ export default {
       this.iceListener = db
         .collection(this.dbCollection)
         .where("sender", "==", this.cameraId)
+        .where("target", "==", this.clientId)
         .onSnapshot(querySnapshot => {
           querySnapshot.forEach(doc => {
             let type = doc.data().what;
@@ -259,7 +261,7 @@ export default {
             if (doc.exists) {
               //alert("Doc exists");
               this.deleteRecord(doc.id);
-              this.sendMessage("lock", this.cameraId);
+              this.sendMessage("lock", "", this.cameraId);
             } else {
               // doc.data() will be undefined in this case
               console.log("No such document!");
@@ -276,6 +278,7 @@ export default {
       this.cameraListener = db
         .collection(this.dbCollection)
         .where("sender", "==", this.cameraId)
+        .where("target", "==", this.clientId)
         .onSnapshot(querySnapshot => {
           querySnapshot.forEach(doc => {
             this.getCalls(doc);
@@ -297,7 +300,7 @@ export default {
           .then(() => this.pc.createAnswer())
           //Set local "address" as the answer we just created
           .then(answer => this.pc.setLocalDescription(answer))
-          .then(() => this.sendMessage("answer", this.pc.localDescription))
+          .then(() => this.sendMessage("answer", this.pc.localDescription, this.cameraId))
           .then(() => {
             this.hasLocalDesc = true;
             this.hasRemoteDesc = true;
