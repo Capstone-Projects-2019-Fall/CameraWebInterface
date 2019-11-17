@@ -84,7 +84,7 @@
         // }
 
         //Runs once to remove any previous traces of calls
-        removeTraces();
+        //removeTraces();
 
         function removeTraces() {
             db.collection(dbCollection)
@@ -111,10 +111,10 @@
 
         //First init
         //Listens for a lock signal before calling reset()
-        db.collection(this.dbCollection)
-            .where("sender", "==", this.clientId)
+        db.collection(dbCollection)
+            .where("sender", "==", clientId)
             .where("what", "==", "lock")
-            .where("target", "==", this.cameraId)
+            .where("target", "==", cameraId)
             .onSnapshot(querySnapshot => {
                 querySnapshot.forEach(doc => {
                     if (doc.exists && !isStreaming) {
@@ -127,9 +127,6 @@
                         return;
                     }
                 });
-            })
-            .catch(function (error) {
-                console.log("Error getting document:", error);
             });
 
         function reset() {
@@ -145,19 +142,19 @@
 
             pc.onicecandidate = event =>
                 event.candidate ?
-                sendMessage("iceCandidate", event.candidate) :
+                sendMessage("iceCandidate", event.candidate, clientId) :
                 console.log("Sent All Ice");
             pc.onaddstream = event => (piVideo.srcObject = event.stream);
-            pc.oniceconnectionstatechange = function () {
+            pc.oniceconnectionstatechange = () => {
                 console.log("Ice state:" + pc.iceConnectionState);
                 if (pc.iceConnectionState == 'disconnected') {
                     if (!resetLock) {
                         resetLock = true;
                         isStreaming = false;
-                        db.collection(this.dbCollection)
-                            .where("sender", "==", this.clientId)
+                        db.collection(dbCollection)
+                            .where("sender", "==", clientId)
                             .where("what", "==", "lock")
-                            .where("target", "==", this.cameraId)
+                            .where("target", "==", cameraId)
                             .get()
                             //Deleting lock
                             .then(querySnapshot => {
@@ -247,15 +244,17 @@
 
 
         //Send message to firebase
-        function sendMessage(type, data, target, options = {}) {
+        function sendMessage(type, data = "", target = "", options = {}) {
             let d = JSON.stringify(data);
-            db.collection(dbCollection).add({
+            let toSend = {
                 sender: cameraId,
                 what: type,
                 data: d,
                 target: target,
                 options: options
-            });
+            };
+            db.collection(dbCollection).add(toSend);
+            console.log(toSend);
         }
 
         //RTCSessionDescription requires a RTCSessionDescriptionInit object to be created
@@ -332,10 +331,10 @@
                         if (!resetLock) {
                             resetLock = true;
                             isStreaming = false;
-                            db.collection(this.dbCollection)
-                                .where("sender", "==", this.clientId)
+                            db.collection(dbCollection)
+                                .where("sender", "==", clientId)
                                 .where("what", "==", "lock")
-                                .where("target", "==", this.cameraId)
+                                .where("target", "==", cameraId)
                                 .get()
                                 //Deleting lock
                                 .then(querySnapshot => {
