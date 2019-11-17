@@ -57,7 +57,8 @@ export default {
       loading: false,
       items: ["Test"],
       clientId: "TestClient1",
-      cameraId: "Pi1",
+      cameraId: "",
+      prevCameraId: "",
       hasLocalDesc: false,
       hasRemoteDesc: false,
       servers: {
@@ -113,6 +114,7 @@ export default {
       alert("WebRTC is not supported");
     }
 
+    this.prevCameraId = this.cameraId;
     this.setListeners();
   },
   beforeDestroy: function() {
@@ -143,7 +145,7 @@ export default {
         await this.iceListener();
       }
 
-      await this.sendMessage("hangup");
+      await this.sendMessage("hangup", this.prevCameraId);
 
       this.hasLocalDesc = false;
       this.hasRemoteDesc = false;
@@ -316,6 +318,12 @@ export default {
       } else {
         this.passlock = true;
       }
+    },
+    cameraId: function() {
+      if (this.isStreaming){
+        this.hangup();
+      }
+      this.prevCameraId = this.cameraId;
     }
   }
 };
