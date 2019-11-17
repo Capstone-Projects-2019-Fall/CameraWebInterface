@@ -114,7 +114,7 @@
         db.collection(this.dbCollection)
             .where("sender", "==", this.clientId)
             .where("what", "==", "lock")
-            .where("data", "==", this.cameraId)
+            .where("target", "==", this.cameraId)
             .onSnapshot(querySnapshot => {
                 querySnapshot.forEach(doc => {
                     if (doc.exists && !isStreaming) {
@@ -157,7 +157,7 @@
                         db.collection(this.dbCollection)
                             .where("sender", "==", this.clientId)
                             .where("what", "==", "lock")
-                            .where("data", "==", this.cameraId)
+                            .where("target", "==", this.cameraId)
                             .get()
                             //Deleting lock
                             .then(querySnapshot => {
@@ -233,7 +233,7 @@
                             .createOffer()
                             .then(offer => pc.setLocalDescription(offer))
                             //Puts local 'address' into firebase for client to retrieve
-                            .then(() => sendMessage("offer", pc.localDescription))
+                            .then(() => sendMessage("offer", pc.localDescription, clientId))
                             .then(() => console.log("Sent offer:"))
                             .then(() => console.log(pc.localDescription))
                             .then(() => hasLocalDesc = true)
@@ -247,12 +247,13 @@
 
 
         //Send message to firebase
-        function sendMessage(type, data, options = {}) {
+        function sendMessage(type, data, target, options = {}) {
             let d = JSON.stringify(data);
             db.collection(dbCollection).add({
                 sender: cameraId,
                 what: type,
                 data: d,
+                target: target,
                 options: options
             });
         }
@@ -271,6 +272,7 @@
             console.log("Listening for ice")
             iceListener = db.collection(dbCollection)
                 .where("sender", "==", clientId)
+                .where("target", "==", cameraId)
                 .onSnapshot(function (querySnapshot) {
                     querySnapshot.forEach(function (doc) {
                         let type = doc.data().what;
@@ -304,6 +306,7 @@
         //Runs function every time it detects a change
         db.collection(dbCollection)
             .where("sender", "==", clientId)
+            .where("target", "==", cameraId)
             .onSnapshot((querySnapshot) => {
 
                 //Searched database for response from the offer we sent
@@ -332,7 +335,7 @@
                             db.collection(this.dbCollection)
                                 .where("sender", "==", this.clientId)
                                 .where("what", "==", "lock")
-                                .where("data", "==", this.cameraId)
+                                .where("target", "==", this.cameraId)
                                 .get()
                                 //Deleting lock
                                 .then(querySnapshot => {
