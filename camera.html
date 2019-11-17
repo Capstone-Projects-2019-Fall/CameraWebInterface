@@ -328,7 +328,28 @@
                         deleteRecord(doc.id);
                         if (!resetLock) {
                             resetLock = true;
-                            reset();
+                            isStreaming = false;
+                            db.collection(this.dbCollection)
+                                .where("sender", "==", this.clientId)
+                                .where("what", "==", "lock")
+                                .where("data", "==", this.cameraId)
+                                .get()
+                                //Deleting lock
+                                .then(querySnapshot => {
+                                    querySnapshot.forEach(doc => {
+                                        if (doc.exists) {
+                                            deleteRecord(doc.id);
+                                        } else {
+                                            // doc.data() will be undefined in this case
+                                            console.log("No such document!");
+                                            return;
+                                        }
+                                    });
+                                })
+                                .catch(function (error) {
+                                    console.log("Error getting document:", error);
+                                })
+                                .then(sendMessage("unlock"));
                         }
                     }
                     //console.log(`${doc.id} => ${doc.data().what}`);
