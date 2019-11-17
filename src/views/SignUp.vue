@@ -1,18 +1,10 @@
 <template>
-  <!-- <div id="login">
-    <h1>Login</h1>
-    <input type="text" name="username" v-model="input.username" placeholder="Username" />
-    <br>
-    <input type="password" name="password" v-model="input.password" placeholder="Password" />
-    <br>
-    <button class="cyan darken-1" type="button" v-on:click="login()">Login</button>
-  </div>-->
   <div class="container">
     <v-row>
       <v-col sm="4"></v-col>
       <v-col>
         <v-card>
-          <v-card-title>Login</v-card-title>
+          <v-card-title>Sign Up</v-card-title>
           <v-card-text>
             <div class="container">
               <v-row>
@@ -41,11 +33,8 @@
                 </v-col>
               </v-row>
               <v-row>
-                <v-col offset="0">
-                  <v-btn small left color="primary" @click="toSignUp">Sign Up</v-btn>
-                </v-col>
-                <v-col offset-sm="4">
-                  <v-btn small left color="primary" @click="login">Submit</v-btn>
+                <v-col offset-sm="8">
+                  <v-btn small left color="primary" @click="createUser">Submit</v-btn>
                 </v-col>
               </v-row>
               <div v-if="error" class="alert alert-danger">{{error}}</div>
@@ -62,7 +51,7 @@
 const fb = require("../firebaseConfig.js");
 
 export default {
-  name: "Login",
+  name: "SignUp",
   data() {
     return {
       show: false,
@@ -71,34 +60,47 @@ export default {
         password: ""
       },
       rules: {
-        required: value => !!value || "Required.",
-        emailMatch: () => "The email and password you entered don't match"
+        required: value => !!value || "Required."
       },
       error: null
     };
   },
   methods: {
-    login() {
+    createUser() {
       // console.log('log in button clicked');
       // console.log('email provided: ' + this.input.email);
       fb.auth
-        .signInWithEmailAndPassword(this.input.email, this.input.password)
+        .createUserWithEmailAndPassword(this.input.email, this.input.password)
         .then(data => {
+          // console.log(data.user.uid);
+
+          // Add a new document in collection "users"
+          fb.db
+            .collection("users")
+            .doc(data.user.uid)
+            .set({
+              email: data.user.email,
+              cameraIds: []
+            })
+            .then(function() {
+              console.log("User document successfully written!");
+            })
+            .catch(function(error) {
+              console.error("Error writing user document: ", error);
+            });
+
           this.$router.replace({ name: "profile" });
         })
         .catch(err => {
           this.error = err.message;
         });
-    },
-    toSignUp() {
-      this.$router.replace({ name: "signup" });
     }
   }
 };
 </script>
 
 <style scoped>
-#login {
+/* #login {
   width: 500px;
   border: 1px solid #cccccc;
   background-color: #ffffff;
@@ -115,5 +117,5 @@ button {
   border: 1px solid #cccccc;
   padding-left: 3px;
   padding-right: 3px;
-}
+} */
 </style>
