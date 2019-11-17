@@ -14,6 +14,8 @@
 <script>
 import { async } from 'q';
 const fb = require("../firebaseConfig.js");
+import { mapGetters } from "vuex";
+import store from "../store";
 
 export default {
   name: "VideoCard",
@@ -49,7 +51,7 @@ export default {
               });
     },
     getVideoName: function(name) {
-        let folder = "videos/";
+        let folder = this.user.data.uid+"/videos/";
         let extension = ".mp4";
         let videoName =  this.name.substring(0, this.name.length - 4);
         let videoAddress ="";
@@ -64,8 +66,11 @@ export default {
       this.changeRate(0.3);
     //console.log(this.videoURL);
   },
-  mounted () {
-    //this.test();
+  computed: {
+    // map `this.user` to `this.$store.getters.user`
+    ...mapGetters({
+      user: "user"
+    })
   }
 };
 
