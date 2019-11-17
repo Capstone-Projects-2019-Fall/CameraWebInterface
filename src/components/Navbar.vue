@@ -59,9 +59,9 @@
               </v-list-item>
             </v-list>
 
-             <v-list else>
+             <v-list v-else>
               <v-list-item
-                v-for="(item, i) in navLoggedIn"
+                v-for="(item, i) in navLoggedOut"
                 :key="i"
                 :to="item.route"
               >
