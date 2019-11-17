@@ -256,8 +256,8 @@ export default {
         .where("sender", "==", this.cameraId)
         .where("what", "==", "unlock")
         .get()
-        .then(function(querySnapshot) {
-          querySnapshot.forEach(function(doc) {
+        .then((querySnapshot) => {
+          querySnapshot.forEach((doc) => {
             if (doc.exists) {
               //alert("Doc exists");
               this.deleteRecord(doc.id);
