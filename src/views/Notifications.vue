@@ -15,6 +15,8 @@
 
 <script>
 const fb = require("../firebaseConfig.js");
+import { mapGetters } from "vuex";
+import store from "../store";
 import ImageCard from "../components/ImageCard";
 
 export default {
@@ -30,7 +32,10 @@ export default {
             return new Date(a.date) - new Date(b.date);
         });
         return this.images;
-    }
+    },
+     ...mapGetters({
+      user: "user"
+    })
   },
   mounted: function() {
     this.$nextTick(function() {
@@ -39,8 +44,9 @@ export default {
   },
   methods: {
     listImages: async function() {
+   
       this.images = [];
-      var childRef = fb.storageRef.child("images");
+      var childRef = fb.storageRef.child(this.user.data.uid+"/images");
       await childRef
         .listAll()
         .then(result => {

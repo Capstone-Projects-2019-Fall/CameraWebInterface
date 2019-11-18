@@ -73,27 +73,14 @@ export default {
       isStreaming: false,
       password: "",
       passlock: true,
+      audioStream: null,
     };
   },
   created: function() {
     this.cleanUp();
-    this.pc = new RTCPeerConnection(this.servers);
-    this.pc.oniceconnectionstatechange = () => {
-      if (this.pc.iceConnectionState == "disconnected") {
-        // this.hasLocalDesc = false;
-        // this.hasRemoteDesc = false;
-        // this.hangup();
-        console.log("Disconnected");
-      }
-    };
-
-    //Send local ice candidates
-    this.pc.onicecandidate = event =>
-      event.candidate
-        ? this.sendMessage("iceCandidate", event.candidate)
-        : console.log("Sent All Ice");
   },
   mounted: function() {
+    this.pc = new RTCPeerConnection(this.servers);
     if (this.hasUserMedia()) {
       navigator.getUserMedia =
         navigator.getUserMedia ||
@@ -108,6 +95,7 @@ export default {
         },
         stream => {
           // myVideo.srcObject = stream;
+          this.audioStream = stream;
           this.pc.addStream(stream);
         },
         function(err) {}
@@ -116,13 +104,7 @@ export default {
       alert("WebRTC is not supported");
     }
 
-    //If WebRTC detects a stream added on other side, set video to that stream
-    this.pc.onaddstream = event => {
-      console.log("Stream added");
-      document.getElementById("piVideo").srcObject = event.stream;
-      this.isStreaming = true;
-      this.loading = false;
-    };
+    this.setListeners();
   },
   beforeDestroy: function() {
     //Remove all remaining traces of this client sending signal
@@ -135,6 +117,14 @@ export default {
         document.getElementById("piVideo").srcObject = null;
       }
       await this.cleanUp();
+
+      this.pc = new RTCPeerConnection(this.servers);
+      this.setListeners();
+
+      if (this.audioStream !== null){
+        this.pc.addStream(this.audioStream);
+      }
+
       if (this.cameraListener !== null) {
         console.log("Turning off camera listener");
         await this.cameraListener();
@@ -150,6 +140,29 @@ export default {
       this.hasRemoteDesc = false;
 
       this.isStreaming = false;
+    },
+    setListeners: function() {
+      this.pc.oniceconnectionstatechange = () => {
+        if (this.pc.iceConnectionState == "disconnected") {
+          // this.hasLocalDesc = false;
+          // this.hasRemoteDesc = false;
+          // this.hangup();
+          console.log("Disconnected");
+        }
+      };
+      //Send local ice candidates
+      this.pc.onicecandidate = event =>
+        event.candidate
+          ? this.sendMessage("iceCandidate", event.candidate)
+          : console.log("Sent All Ice");
+
+      //If WebRTC detects a stream added on other side, set video to that stream
+      this.pc.onaddstream = event => {
+        console.log("Stream added");
+        document.getElementById("piVideo").srcObject = event.stream;
+        this.isStreaming = true;
+        this.loading = false;
+      };
     },
     hasUserMedia: function() {
       //check if the browser supports the WebRTC
