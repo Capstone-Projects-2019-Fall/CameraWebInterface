@@ -29,7 +29,8 @@ export default new Vuex.Store({
         commit("SET_USER", {
           uid: user.uid,
           displayName: user.displayName,
-          email: user.email
+          email: user.email,
+          FaceRec: user.FaceRec
         });
       } else {
         commit("SET_USER", null);
