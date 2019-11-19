@@ -57,6 +57,9 @@
               >
                 <v-list-item-title>{{ item.text }}</v-list-item-title>
               </v-list-item>
+              <v-list-item @click="signOut">
+                <v-list-item-title>Sign Out</v-list-item-title>
+              </v-list-item>
             </v-list>
 
              <v-list v-else>
@@ -67,6 +70,8 @@
               >
                 <v-list-item-title>{{ item.text }}</v-list-item-title>
               </v-list-item>
+         
+ 
             </v-list>
             
           </v-menu>
