@@ -1,8 +1,8 @@
 <template>
   <v-app>
     <v-row>
-      <v-col>
-        <v-container >
+    
+        <v-container>
           <v-row>
            <v-col>
               <v-btn small left color="primary" @click="dialog=true">Add New</v-btn>
@@ -17,14 +17,12 @@
 
           <v-dialog
             v-model="dialog"
-            max-width="800">
-            <AddFace/>
+            max-width="6550px">
+            <AddFace v-on:addedImage="onClickAdd()" />
             </v-dialog>
-
-        
-         
+                 
         </v-container>
-      </v-col>
+     
       
 
     </v-row>
@@ -36,12 +34,14 @@
 
 
 <script>
+
 import { async } from 'q';
 const fb = require("../firebaseConfig.js");
 import { mapGetters } from "vuex";
 import store from "../store";
 import FaceCard from "../components/FaceCard"
 import AddFace from "../components/AddFace"
+
 export default {
   name: 'Upload',
   components: {  FaceCard, AddFace },
@@ -67,9 +67,9 @@ export default {
     });
   },
   methods:{
-    onChildClick(value){
-      console.log(value);
-      console.log("child was clicked");
+    onClickAdd(){
+      this.dialog = false;
+      this.updateList();
     },
 
     async updateList(){
