@@ -1,10 +1,12 @@
 <template>
-  <v-card height="300px" width="300px">
-      <v-card-subtitle>{{image}}</v-card-subtitle>
-      <v-img max-width="200px" max-height="200px" :src="imageURL"></v-img>
-      <v-card-actions>
+  <v-card height="300px" width="300px" >
+      <v-card-subtitle class="cyan darken-1 font-weight-black">{{image}} </v-card-subtitle>
+       <v-card-actions>
         <v-btn small color="error" @click="deleteImage">Delete</v-btn>
        </v-card-actions>
+
+      <v-img max-width="200px" max-height="200px" :src="imageURL"></v-img>
+
   </v-card>
 </template>
 
