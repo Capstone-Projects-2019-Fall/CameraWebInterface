@@ -86,6 +86,19 @@
         //Runs once to remove any previous traces of calls
         //removeTraces();
 
+        db.collection("cameras").doc(cameraId).get().then((doc) => {
+            if (doc.exists) {
+                console.log("Document data:", doc.data());
+                clientId = doc.data().user;
+                console.log(clientId);
+            } else {
+                // doc.data() will be undefined in this case
+                console.log("Camera is not registered");
+            }
+        }).catch(function (error) {
+            console.log("Error getting document:", error);
+        });
+
         function removeTraces() {
             db.collection(dbCollection)
                 .where("sender", "==", cameraId)
