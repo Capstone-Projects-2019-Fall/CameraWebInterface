@@ -66,23 +66,6 @@
         let hasLocalDesc = false;
         let hasRemoteDesc = false;
 
-        // var pc = new RTCPeerConnection(servers);
-        // //Send local ice candidates
-        // pc.onicecandidate = event =>
-        //     event.candidate ?
-        //     sendMessage("iceCandidate", event.candidate) :
-        //     console.log("Sent All Ice");
-        // //If WebRTC detects a stream added on other side, set video to that stream
-        // pc.onaddstream = event => (piVideo.srcObject = event.stream);
-
-        // //If disconnected, reset webrtc
-        // pc.oniceconnectionstatechange = function () {
-        //     console.log("Ice state:" + pc.iceConnectionState);
-        //     if (pc.iceConnectionState == 'disconnected') {
-        //         reset();
-        //     }
-        // }
-
         //Runs once to remove any previous traces of calls
         //removeTraces();
 
@@ -120,7 +103,23 @@
         //Pseudo lock to make sure we can't have parallel resets
         let resetLock = true;
         let isStreaming = false;
-        sendMessage("unlock");
+
+        //Sends unlock signal if one isn't already there
+        /**************************************
+        !!! For debugging !!!
+        In prod, embedded system handles lock and launches this page when unlock is removed.
+        Putting an unlock back in breaks the state machine.
+        This is here for when this page is launched manually and waiting for a lock.
+        **************************************/
+        db.collection(dbCollection)
+            .where("sender", "==", cameraId)
+            .where("what", "==", "unlock")
+            .get()
+            .then(querySnapshot => {
+                if (querySnapshot.empty) {
+                    sendMessage("unlock");
+                }
+            });
 
         //First init
         //Listens for a lock signal before calling reset()
@@ -134,10 +133,6 @@
                         //alert("Doc exists");
                         reset();
                         isStreaming = true;
-                    } else {
-                        // doc.data() will be undefined in this case
-                        console.log("No such document!");
-                        return;
                     }
                 });
             });
@@ -172,13 +167,7 @@
                             //Deleting lock
                             .then(querySnapshot => {
                                 querySnapshot.forEach(doc => {
-                                    if (doc.exists) {
-                                        deleteRecord(doc.id);
-                                    } else {
-                                        // doc.data() will be undefined in this case
-                                        console.log("No such document!");
-                                        return;
-                                    }
+                                    deleteRecord(doc.id);
                                 });
                             })
                             .catch(function (error) {
@@ -259,12 +248,14 @@
         //Send message to firebase
         function sendMessage(type, data = "", target = "", options = {}) {
             let d = JSON.stringify(data);
+            let date = new Date();
             let toSend = {
                 sender: cameraId,
                 what: type,
                 data: d,
                 target: target,
-                options: options
+                options: options,
+                debug: "Date inserted: " + date.toLocaleString()
             };
             db.collection(dbCollection).add(toSend);
             console.log(toSend);
