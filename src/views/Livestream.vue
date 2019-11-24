@@ -15,7 +15,13 @@
 
       <v-card-title class="justify-center">
         <v-card width="600px">
-          <video id="piVideo" class="livestream" autoplay muted playsinline></video>
+          <video
+            id="piVideo"
+            class="livestream"
+            autoplay
+            muted
+            playsinline
+          ></video>
           <!-- <v-img src="../assets/mspi.png"
           ></v-img>-->
         </v-card>
@@ -28,10 +34,14 @@
           v-if="!isStreaming"
           small
           color="primary"
-          @click="listenPi(); loading = true;"
+          @click="
+            listenPi();
+            loading = true;
+          "
           :loading="loading"
-          :disabled="(loading || passlock)"
-        >Start Video Stream</v-btn>
+          :disabled="loading || passlock"
+          >Start Video Stream</v-btn
+        >
         <v-btn v-else small color="error" @click="hangup()">Hang Up</v-btn>
       </v-card-actions>
     </v-card>
@@ -47,7 +57,8 @@
 
 <script>
 const db = require("../firebaseConfig.js").db;
-import store from "../store";
+import store from "../store.js";
+import { mapState } from "vuex";
 
 //TODO: Implement lock mechanism so one account on multiple pcs can't access
 
@@ -90,6 +101,8 @@ export default {
     this.cleanUp();
   },
   mounted: function() {
+    this.$nextTick(() => {});
+
     this.pc = new RTCPeerConnection(this.servers);
     if (this.hasUserMedia()) {
       navigator.getUserMedia =
@@ -144,8 +157,12 @@ export default {
         console.log("Turning off ice listener");
         await this.iceListener();
       }
-
-      await this.sendMessage("hangup","", this.prevCameraId);
+      
+      if (this.prevCameraId != null){ //Client switched cameras
+      await this.sendMessage("hangup", "", this.prevCameraId);
+      }else{ //Client switched pages after calling once
+        await this.sendMessage("hangup", "", this.cameraId);
+      }
 
       this.hasLocalDesc = false;
       this.hasRemoteDesc = false;
@@ -183,7 +200,8 @@ export default {
         navigator.mozGetUserMedia
       );
     },
-    sendMessage: function(type, data = "", target="", options = {}) {
+    sendMessage: function(type, data = "", target = "", options = {}) {
+      this.clientId = this.uid;
       let d = JSON.stringify(data);
       let date = new Date();
       db.collection(this.dbCollection).add({
@@ -258,33 +276,33 @@ export default {
         .where("sender", "==", this.cameraId)
         .where("what", "==", "unlock")
         .get()
-        .then((querySnapshot) => {
-          querySnapshot.forEach((doc) => {
-            if (doc.exists) {
-              //alert("Doc exists");
-              this.deleteRecord(doc.id);
-              this.sendMessage("lock", "", this.cameraId);
-            } else {
-              // doc.data() will be undefined in this case
+        .then(querySnapshot => {
+          if (!querySnapshot.empty){
+            querySnapshot.forEach(doc => {
+                //alert("Doc exists");
+                this.deleteRecord(doc.id);
+                this.sendMessage("lock", "", this.cameraId);
+            });
+          }else{
               console.log("No such document!");
               alert("Camera currently not online");
               this.loading = false;
               return;
-            }
-          });
+          }
+        }).then(() => {
+          console.log("Listening for sender: " + this.cameraId + "Target: " + this.clientId);
+          this.cameraListener = db
+            .collection(this.dbCollection)
+            .where("sender", "==", this.cameraId)
+            .where("target", "==", this.clientId)
+            .onSnapshot(querySnapshot => {
+              querySnapshot.forEach(doc => {
+                this.getCalls(doc);
+              });
+            });
         })
         .catch(function(error) {
           console.log("Error getting document:", error);
-        });
-
-      this.cameraListener = db
-        .collection(this.dbCollection)
-        .where("sender", "==", this.cameraId)
-        .where("target", "==", this.clientId)
-        .onSnapshot(querySnapshot => {
-          querySnapshot.forEach(doc => {
-            this.getCalls(doc);
-          });
         });
     },
     getCalls: async function(doc) {
@@ -302,7 +320,9 @@ export default {
           .then(() => this.pc.createAnswer())
           //Set local "address" as the answer we just created
           .then(answer => this.pc.setLocalDescription(answer))
-          .then(() => this.sendMessage("answer", this.pc.localDescription, this.cameraId))
+          .then(() =>
+            this.sendMessage("answer", this.pc.localDescription, this.cameraId)
+          )
           .then(() => {
             this.hasLocalDesc = true;
             this.hasRemoteDesc = true;
@@ -312,6 +332,11 @@ export default {
         console.log("Recieved offer, sent answer");
       }
       //console.log(`${doc.id} => ${doc.data().what}`);
+    }
+  },
+  computed: {
+    uid: function() {
+      return this.$store.state.user.data.uid;
     }
   },
   watch: {
@@ -324,11 +349,15 @@ export default {
         this.passlock = true;
       }
     },
-    cameraId: function() {
-      if (this.isStreaming){
-        this.hangup();
-      }
-      this.prevCameraId = this.cameraId;
+    // cameraId: function() {
+    //   if (this.isStreaming) {
+    //     this.hangup();
+    //   }
+    //   this.prevCameraId = this.cameraId;
+    // },
+    uid: function() {
+      this.clientId = this.uid;
+      console.log(this.clientId);
     }
   }
 };

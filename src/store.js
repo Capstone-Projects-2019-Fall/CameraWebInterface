@@ -6,7 +6,11 @@ export default new Vuex.Store({
   state: {
     user: {
       loggedIn: false,
-      data: null,
+      data: {
+        uid: "",
+        displayName: "",
+        email: ""
+      },
       cameraIds: []
     }
   },
@@ -16,6 +20,9 @@ export default new Vuex.Store({
     },
     cameraIds(state) {
       return state.user.cameraIds;
+    },
+    uid(state){
+      return state.user.data.uid;
     }
   },
   mutations: {
