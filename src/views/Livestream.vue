@@ -185,12 +185,14 @@ export default {
     },
     sendMessage: function(type, data = "", target="", options = {}) {
       let d = JSON.stringify(data);
+      let date = new Date();
       db.collection(this.dbCollection).add({
         sender: this.clientId,
         what: type,
         data: d,
         target: target,
-        options: options
+        options: options,
+        debug: "Date inserted: " + date.toLocaleString()
       });
     },
     cleanUp: async function() {
