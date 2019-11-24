@@ -69,16 +69,22 @@
         //Runs once to remove any previous traces of calls
         //removeTraces();
 
+        //Fetching user
         db.collection("cameras").doc(cameraId).get().then((doc) => {
             if (doc.exists) {
                 console.log("Document data:", doc.data());
                 clientId = doc.data().user;
-                console.log(clientId);
+
             } else {
                 // doc.data() will be undefined in this case
                 console.log("Camera is not registered");
             }
-        }).catch(function (error) {
+        })
+        .then(() => {
+            listenLock();
+            listen();
+        })
+        .catch(function (error) {
             console.log("Error getting document:", error);
         });
 
@@ -123,7 +129,8 @@
 
         //First init
         //Listens for a lock signal before calling reset()
-        db.collection(dbCollection)
+        function listenLock(){
+            db.collection(dbCollection)
             .where("sender", "==", clientId)
             .where("what", "==", "lock")
             .where("target", "==", cameraId)
@@ -136,6 +143,7 @@
                     }
                 });
             });
+        }
 
         function reset() {
             hasLocalDesc = false;
@@ -307,7 +315,8 @@
 
         //Attaches listener to listen for connetion from client
         //Runs function every time it detects a change
-        db.collection(dbCollection)
+        function listen() {
+            db.collection(dbCollection)
             .where("sender", "==", clientId)
             .where("target", "==", cameraId)
             .onSnapshot((querySnapshot) => {
@@ -361,6 +370,7 @@
                     //console.log(`${doc.id} => ${doc.data().what}`);
                 });
             });
+        }
     </script>
 </body>
 
