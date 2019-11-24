@@ -1,5 +1,5 @@
 <template>
-  <div class="container">
+  <div v-if="user.data" class="container">
     <v-row>
       <v-col>
         <v-card>
@@ -129,7 +129,18 @@ export default {
   },
   mounted: function() {
     this.$nextTick(function() {
-      this.getUserCameraIds();
+      if(this.user.data) {
+        this.getUserCameraIds();
+      }
+      
+    });
+  },
+  updated: function() {
+    this.$nextTick(function() {
+      if(this.user.data) {
+        this.getUserCameraIds();
+      }
+      
     });
   },
   methods: {
