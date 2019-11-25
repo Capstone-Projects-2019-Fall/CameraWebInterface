@@ -133,7 +133,9 @@ export default {
   beforeDestroy: function() {
     //Remove all remaining traces of this client sending signal
     //Only works if view is destroyed, which doesn't include webpage exit
+    if (this.isStreaming){
     this.hangup();
+    }
   },
   methods: {
     hangup: async function() {
@@ -158,9 +160,12 @@ export default {
         await this.iceListener();
       }
       
-      if (this.prevCameraId != null){ //Client switched cameras
+      console.log("Hangup ClientID: " + this.clientId);
+      if (this.prevCameraId != ""){ //Client switched cameras
+      console.log("Hanging up previous camera: " + this.prevCameraId);
       await this.sendMessage("hangup", "", this.prevCameraId);
       }else{ //Client switched pages after calling once
+      console.log("Hanging up current camera: " + this.cameraId);
         await this.sendMessage("hangup", "", this.cameraId);
       }
 
@@ -349,12 +354,13 @@ export default {
         this.passlock = true;
       }
     },
-    // cameraId: function() {
-    //   if (this.isStreaming) {
-    //     this.hangup();
-    //   }
-    //   this.prevCameraId = this.cameraId;
-    // },
+    cameraId: async function() {
+      if (this.isStreaming) {
+        await this.hangup();
+      }
+      console.log("Prev Camera: " + this.prevCameraId + " Current Camera: " + this.cameraId);
+      this.prevCameraId = this.cameraId
+    },
     uid: function() {
       this.clientId = this.uid;
       console.log(this.clientId);
