@@ -355,6 +355,21 @@ export default {
       }
     },
     cameraId: async function() {
+      await db.collection("cameras").doc(this.cameraId).get()
+        .then((doc) => {
+            if (doc.exists) {
+                if (!doc.data().active){
+                  alert("Camera is currently not active!");
+                  this.cameraId = "";
+                  return;
+                }
+            } else {
+                // doc.data() will be undefined in this case
+                console.log("Camera is not registered");
+            }
+        });
+
+
       if (this.isStreaming) {
         await this.hangup();
       }
