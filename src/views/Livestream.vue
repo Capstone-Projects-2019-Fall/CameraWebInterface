@@ -133,8 +133,8 @@ export default {
   beforeDestroy: function() {
     //Remove all remaining traces of this client sending signal
     //Only works if view is destroyed, which doesn't include webpage exit
-    if (this.isStreaming){
-    this.hangup();
+    if (this.isStreaming) {
+      this.hangup();
     }
   },
   methods: {
@@ -159,13 +159,15 @@ export default {
         console.log("Turning off ice listener");
         await this.iceListener();
       }
-      
+
       console.log("Hangup ClientID: " + this.clientId);
-      if (this.prevCameraId != ""){ //Client switched cameras
-      console.log("Hanging up previous camera: " + this.prevCameraId);
-      await this.sendMessage("hangup", "", this.prevCameraId);
-      }else{ //Client switched pages after calling once
-      console.log("Hanging up current camera: " + this.cameraId);
+      if (this.prevCameraId != "") {
+        //Client switched cameras
+        console.log("Hanging up previous camera: " + this.prevCameraId);
+        await this.sendMessage("hangup", "", this.prevCameraId);
+      } else {
+        //Client switched pages after calling once
+        console.log("Hanging up current camera: " + this.cameraId);
         await this.sendMessage("hangup", "", this.cameraId);
       }
 
@@ -282,20 +284,26 @@ export default {
         .where("what", "==", "unlock")
         .get()
         .then(querySnapshot => {
-          if (!querySnapshot.empty){
+          if (!querySnapshot.empty) {
             querySnapshot.forEach(doc => {
-                //alert("Doc exists");
-                this.deleteRecord(doc.id);
-                this.sendMessage("lock", "", this.cameraId);
+              //alert("Doc exists");
+              this.deleteRecord(doc.id);
+              this.sendMessage("lock", "", this.cameraId);
             });
-          }else{
-              console.log("No such document!");
-              alert("Camera currently not online");
-              this.loading = false;
-              return;
+          } else {
+            console.log("No such document!");
+            alert("Camera currently not online");
+            this.loading = false;
+            return;
           }
-        }).then(() => {
-          console.log("Listening for sender: " + this.cameraId + "Target: " + this.clientId);
+        })
+        .then(() => {
+          console.log(
+            "Listening for sender: " +
+              this.cameraId +
+              "Target: " +
+              this.clientId
+          );
           this.cameraListener = db
             .collection(this.dbCollection)
             .where("sender", "==", this.cameraId)
@@ -355,26 +363,35 @@ export default {
       }
     },
     cameraId: async function() {
-      await db.collection("cameras").doc(this.cameraId).get()
-        .then((doc) => {
+      if (this.cameraId == "") {
+        await db
+          .collection("cameras")
+          .doc(this.cameraId)
+          .get()
+          .then(doc => {
             if (doc.exists) {
-                if (!doc.data().active){
-                  alert("Camera is currently not active!");
-                  this.cameraId = "";
-                  return;
-                }
+              if (!doc.data().active) {
+                alert("Camera is currently not active!");
+                this.cameraId = "";
+                return;
+              }
             } else {
-                // doc.data() will be undefined in this case
-                console.log("Camera is not registered");
+              // doc.data() will be undefined in this case
+              console.log("Camera is not registered");
             }
-        });
-
+          });
+      }
 
       if (this.isStreaming) {
         await this.hangup();
       }
-      console.log("Prev Camera: " + this.prevCameraId + " Current Camera: " + this.cameraId);
-      this.prevCameraId = this.cameraId
+      console.log(
+        "Prev Camera: " +
+          this.prevCameraId +
+          " Current Camera: " +
+          this.cameraId
+      );
+      this.prevCameraId = this.cameraId;
     },
     uid: function() {
       this.clientId = this.uid;
