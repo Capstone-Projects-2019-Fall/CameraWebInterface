@@ -19,7 +19,7 @@
             id="piVideo"
             class="livestream"
             autoplay
-            muted
+            
             playsinline
           ></video>
           <!-- <v-img src="../assets/mspi.png"
