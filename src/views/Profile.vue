@@ -55,8 +55,26 @@
               <v-col sm="2">
                 <v-card-text>Camera:</v-card-text>
               </v-col>
-              <v-col sm="8">
-                <v-text-field :label="camera" :disabled="true" dense></v-text-field>
+              <v-col sm="6">
+                <v-text-field :label="camera.cameraId" :disabled="true" dense></v-text-field>
+              </v-col>
+              <v-col>
+                <v-btn
+                  v-if="camera.active"
+                  small
+                  left
+                  color="red"
+                  :disabled="!camera.ready"
+                  @click="toggleActive(camera.cameraId, camera.active)"
+                >Deactivate</v-btn>
+                <v-btn
+                  v-else
+                  small
+                  left
+                  color="green"
+                  :disabled="!camera.ready"
+                  @click="toggleActive(camera.cameraId, camera.active)"
+                >Activate</v-btn>
               </v-col>
               <v-col>
                 <v-btn small left color="primary" @click="deleteUserCamera(index)">Delete</v-btn>
@@ -67,10 +85,12 @@
                 <v-card-text>Camera:</v-card-text>
               </v-col>
               <v-col sm="8">
-                <v-text-field 
-                  v-model="input.cameraId" 
+                <v-text-field
+                  v-model="input.cameraId"
                   :rules="[rules.cameraId]"
-                  label="Camera Id" dense></v-text-field>
+                  label="Camera Id"
+                  dense
+                ></v-text-field>
               </v-col>
               <v-col>
                 <v-btn small left color="primary" @click="addUserCamera">Add</v-btn>
@@ -110,7 +130,7 @@ export default {
       },
       rules: {
         cameraId: value => {
-          if(value.length < 5 || !(/^\d+$/.test(value))) {
+          if (value.length < 5 || !/^\d+$/.test(value)) {
             return "Camera Id must be at least 5 digits";
           }
           return true;
@@ -129,18 +149,16 @@ export default {
   },
   mounted: function() {
     this.$nextTick(function() {
-      if(this.user.data) {
+      if (this.user.data) {
         this.getUserCameraIds();
       }
-      
     });
   },
   updated: function() {
     this.$nextTick(function() {
-      if(this.user.data) {
+      if (this.user.data) {
         this.getUserCameraIds();
       }
-      
     });
   },
   methods: {
@@ -191,6 +209,7 @@ export default {
     async getUserCameraIds() {
       var docRef = fb.db.collection("users").doc(this.user.data.uid);
       var temp = [];
+      var temp2 = [];
 
       await docRef
         .get()
@@ -207,11 +226,31 @@ export default {
           console.log("Getting camera ids. Error getting document:", error);
         });
 
-      this.userCameras = temp;
+      await fb.db
+        .collection("cameras")
+        .where("user", "==", this.user.data.uid)
+        .get()
+        .then(function(querySnapshot) {
+          querySnapshot.forEach(function(doc) {
+            // doc.data() is never undefined for query doc snapshots
+            // console.log(doc.id, " => ", doc.data());
+            var cameraObject = doc.data();
+            cameraObject.cameraId = doc.id;
+            temp2.push(cameraObject);
+          });
+        })
+        .catch(function(error) {
+          console.log("Error getting documents: ", error);
+        });
+      // console.log(temp2);
+      this.userCameras = temp2;
     },
     addUserCamera() {
       var userId = this.user.data.uid;
-      var temp = this.userCameras;
+      var temp = [];
+      for (var i = 0; i < this.userCameras.length; i++) {
+        temp.push(this.userCameras[i].cameraId);
+      }
       var cameraIdToAdd = this.input.cameraId;
 
       var userDocRef = fb.db.collection("users").doc(userId);
@@ -222,10 +261,8 @@ export default {
         .then(doc => {
           if (doc.exists) {
             if (doc.data().user !== "") {
-              
               // this.error2 = "This camera is already registered to an account.";
               throw "This camera is already registered to an account.";
-
             } else if (doc.data().user === "") {
               //set uid
               //add camera to user account
@@ -239,7 +276,9 @@ export default {
                   });
                 })
                 .then(() => {
-                  console.log("Adding camera. Camera successfully reassigned to user.");
+                  console.log(
+                    "Adding camera. Camera successfully reassigned to user."
+                  );
                 })
                 .catch(err => {
                   console.error(err);
@@ -258,10 +297,15 @@ export default {
                 user: userId
               })
               .then(function() {
-                console.log("Adding camera. Camera document successfully written!");
+                console.log(
+                  "Adding camera. Camera document successfully written!"
+                );
               })
               .catch(function(error) {
-                console.error("Adding camera. Error writing camera document: ", error);
+                console.error(
+                  "Adding camera. Error writing camera document: ",
+                  error
+                );
                 this.error2 = error.message;
               });
           }
@@ -292,8 +336,10 @@ export default {
         });
     },
     deleteUserCamera(index) {
-      
-      var temp = this.userCameras;
+      var temp = [];
+      for (var i = 0; i < this.userCameras.length; i++) {
+        temp.push(this.userCameras[i].cameraId);
+      }
       var cameraIdToDelete = temp[index];
 
       var userDocRef = fb.db.collection("users").doc(this.user.data.uid);
@@ -309,7 +355,9 @@ export default {
           });
         })
         .then(() => {
-          console.log("Deleting camera. Camera successfully reassigned from user");
+          console.log(
+            "Deleting camera. Camera successfully reassigned from user"
+          );
           fb.db
             .runTransaction(transaction => {
               return transaction.get(userDocRef).then(function(doc) {
@@ -328,6 +376,25 @@ export default {
               console.error(err);
               this.error2 = err.message;
             });
+        })
+        .catch(err => {
+          console.error(err);
+          this.error2 = err.message;
+        });
+    },
+    toggleActive(cameraId, toggleFrom) {
+      var cameraDocRef = fb.db.collection("cameras").doc(cameraId);
+      fb.db
+        .runTransaction(transaction => {
+          return transaction.get(cameraDocRef).then(function(doc) {
+            if (!doc.exists) {
+              throw "Toogle Active. Document does not exist!";
+            }
+            transaction.update(cameraDocRef, { active: !toggleFrom });
+          });
+        })
+        .then(() => {
+          console.log("Adding camera. Camera successfully reassigned to user.");
         })
         .catch(err => {
           console.error(err);
