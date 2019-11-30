@@ -40,7 +40,9 @@
                           <p>  Upload an image: </p>
                         </v-col>
                            <v-col sm="2">
+
                         <input type="file" ref="imageUpload" @change="previewImage" accept="image/jpeg" >
+
                          </v-col>
                     </v-row>
                     <v-row>
@@ -115,9 +117,11 @@ export default {
             input: {
                 name: null
             },
+
             video: {
                 src: ""
             },
+
             canvas: {},
             captures: "",
             stream: null,
@@ -178,6 +182,7 @@ export default {
             }, error=>{console.log(error.message)},
             ()=>{this.uploadValue=100;
                 childRef.snapshot.ref.getDownloadURL().then((url)=>{
+
                 filesArray.update({
                 familiarFaces: firebase.firestore.FieldValue.arrayUnion(this.input.name+".jpg")
                 });
@@ -186,6 +191,7 @@ export default {
                    this.canvas = this.$refs.canvas;
                     const context = this.canvas.getContext('2d');
                     context.clearRect(0, 0, 640, 480);
+
                 this.$emit('addedImage');
                 });
             }
@@ -195,12 +201,18 @@ export default {
         async onUploadFile(){
             this.picture=null;
             var filesArray = fb.db.collection("users").doc(this.user.data.uid);
+<<<<<<< HEAD
             var childRef = fb.storageRef.child(this.user.data.uid+"/Training/"+this.input.name+".jpg").put(this.imageData);
+=======
+
+            var childRef = fb.storageRef.child(this.user.data.uid+"/training/"+this.input.name+".jpg").put(this.imageData);
+>>>>>>> 0a8aec1f7aff6fd898aad34f42dff660c3cfa70e
             await childRef.on(`state_changed`,snapshot=>{
             this.uploadValue = (snapshot.bytesTransferred/snapshot.totalBytes)*100;
             }, error=>{console.log(error.message)},
             ()=>{this.uploadValue=100;
                 childRef.snapshot.ref.getDownloadURL().then((url)=>{
+
                     filesArray.update({
                         familiarFaces: firebase.firestore.FieldValue.arrayUnion(this.input.name+".jpg")
                     });
@@ -208,6 +220,7 @@ export default {
                     this.picture=null;
                     this.$refs.imageUpload.value = null;
                     this.$emit('addedImage');
+
             });
             }
             );
@@ -219,6 +232,7 @@ export default {
                 var context = this.canvas.getContext("2d").drawImage(this.video, 0, 0, 320, 240);
             else
                 var context = this.canvas.getContext("2d").drawImage(this.video, 0, 0, 640, 480);
+
             this.captures = (canvas.toDataURL("image/jpeg", 0.8));
         }
 

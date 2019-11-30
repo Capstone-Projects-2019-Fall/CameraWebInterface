@@ -18,7 +18,9 @@
           <v-dialog
 
             v-model="dialog"
+
             max-width="1000px">
+
             <AddFace v-on:addedImage="onClickAdd()" />
             </v-dialog>
                  
@@ -50,7 +52,7 @@ export default {
     return{
       items: [],
       fileNames: [],
-     
+    
       dialog:false,
       disabled: null,
       childMsg: ""
