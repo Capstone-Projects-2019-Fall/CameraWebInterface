@@ -172,7 +172,7 @@ export default {
         async onUploadWebcam(){
             this.picture=null;
             var filesArray =fb.db.collection("users").doc(this.user.data.uid);
-            var childRef = fb.storageRef.child(this.user.data.uid+"/training/"+this.input.name+".jpg").putString(this.captures.split(',')[1], "base64", {contentType:"image/jpg"});
+            var childRef = fb.storageRef.child(this.user.data.uid+"/Training/"+this.input.name+".jpg").putString(this.captures.split(',')[1], "base64", {contentType:"image/jpg"});
             await childRef.on(`state_changed`,snapshot=>{
             this.uploadValue = (snapshot.bytesTransferred/snapshot.totalBytes)*100;
             }, error=>{console.log(error.message)},
@@ -195,7 +195,7 @@ export default {
         async onUploadFile(){
             this.picture=null;
             var filesArray = fb.db.collection("users").doc(this.user.data.uid);
-            var childRef = fb.storageRef.child(this.user.data.uid+"/training/"+this.input.name+".jpg").put(this.imageData);
+            var childRef = fb.storageRef.child(this.user.data.uid+"/Training/"+this.input.name+".jpg").put(this.imageData);
             await childRef.on(`state_changed`,snapshot=>{
             this.uploadValue = (snapshot.bytesTransferred/snapshot.totalBytes)*100;
             }, error=>{console.log(error.message)},
@@ -225,3 +225,8 @@ export default {
     }
 }
 </script>
+<style scoped>
+.v-card {
+  overflow: hidden !important;
+}
+</style>

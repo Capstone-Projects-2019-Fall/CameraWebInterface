@@ -16,6 +16,7 @@
           </v-row>
 
           <v-dialog
+
             v-model="dialog"
             max-width="1000px">
             <AddFace v-on:addedImage="onClickAdd()" />
@@ -75,7 +76,7 @@ export default {
 
     async updateList(){
       this.items = [];
-      var childRef = fb.storageRef.child(this.user.data.uid+"/training/");
+      var childRef = fb.storageRef.child(this.user.data.uid+"/Training/");
       //var filesArray = fb.db.collection("users").doc(this.user.data.uid);
       console.log(childRef);
        await childRef.listAll().then(result => {
@@ -118,5 +119,7 @@ export default {
 img.preview {
     width: 200px;
 }
+
+
 
 </style>
