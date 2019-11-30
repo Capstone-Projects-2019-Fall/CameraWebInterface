@@ -1,5 +1,5 @@
 <template>
-  <div class="container">
+  <div v-if="user.data" class="container">
     <v-row>
       <v-col>
         <v-card>
@@ -46,10 +46,74 @@
             </div>
           </v-card-text>
         </v-card>
+        <br />
+        <v-card>
+          <v-card-title>Cameras</v-card-title>
+          <!-- <v-btn small left color="primary" @click="getUserCameraIds">Submit</v-btn> -->
+          <v-card-text>
+            <v-row v-for="(camera, index) in userCameras" :key="index">
+              <v-col sm="2">
+                <v-card-text>Camera:</v-card-text>
+              </v-col>
+              <v-col sm="6">
+                <v-text-field :label="camera.cameraId" :disabled="true" dense></v-text-field>
+              </v-col>
+              <v-col>
+                <v-btn
+                  v-if="camera.active"
+                  small
+                  left
+                  color="red"
+                  :disabled="!camera.ready"
+                  @click="toggleActive(camera.cameraId, camera.active)"
+                >Deactivate</v-btn>
+                <v-btn
+                  v-else
+                  small
+                  left
+                  color="green"
+                  :disabled="!camera.ready"
+                  @click="toggleActive(camera.cameraId, camera.active)"
+                >Activate</v-btn>
+              </v-col>
+              <v-col>
+                <v-btn small left color="primary" @click="deleteUserCamera(index)">Delete</v-btn>
+              </v-col>
+            </v-row>
+            <v-row v-if="addCameraClicked">
+              <v-col sm="2">
+                <v-card-text>Camera:</v-card-text>
+              </v-col>
+              <v-col sm="8">
+                <v-text-field
+                  v-model="input.cameraId"
+                  :rules="[rules.cameraId]"
+                  label="Camera Id"
+                  dense
+                ></v-text-field>
+              </v-col>
+              <v-col>
+                <v-btn small left color="primary" @click="addUserCamera">Add</v-btn>
+              </v-col>
+            </v-row>
+            <v-row>
+              <v-col offset-sm="8">
+                <v-btn
+                  small
+                  left
+                  color="primary"
+                  @click="addCameraClicked = !addCameraClicked"
+                >Add Camera</v-btn>
+              </v-col>
+            </v-row>
+            <div v-if="error2" class="alert alert-danger">{{error2}}</div>
+          </v-card-text>
+        </v-card>
       </v-col>
     </v-row>
   </div>
 </template>
+
 <script>
 import { mapGetters } from "vuex";
 import store from "../store";
@@ -59,10 +123,22 @@ export default {
   data() {
     return {
       disableEditEmail: true,
+      addCameraClicked: false,
       input: {
-        email: ""
+        email: "",
+        cameraId: ""
       },
-      error: null
+      rules: {
+        cameraId: value => {
+          if (value.length < 5 || !/^\d+$/.test(value)) {
+            return "Camera Id must be at least 5 digits";
+          }
+          return true;
+        }
+      },
+      userCameras: [],
+      error: null,
+      error2: null
     };
   },
   computed: {
@@ -70,6 +146,20 @@ export default {
     ...mapGetters({
       user: "user"
     })
+  },
+  mounted: function() {
+    this.$nextTick(function() {
+      if (this.user.data) {
+        this.getUserCameraIds();
+      }
+    });
+  },
+  updated: function() {
+    this.$nextTick(function() {
+      if (this.user.data) {
+        this.getUserCameraIds();
+      }
+    });
   },
   methods: {
     editEmail() {
@@ -82,8 +172,7 @@ export default {
       fbUser
         .updateEmail(this.input.email)
         .then(() => {
-          // Update successful.
-          // Now update the record in the database
+          // Update the record in the database
           // Create a reference to the db doc.
           var docRef = fb.db.collection("users").doc(this.user.data.uid);
 
@@ -91,7 +180,7 @@ export default {
             .runTransaction(function(transaction) {
               return transaction.get(docRef).then(function(doc) {
                 if (!doc.exists) {
-                  throw "Document does not exist!";
+                  throw "Updating email. User document does not exist.";
                 }
 
                 transaction.update(docRef, { email: newEmail });
@@ -99,21 +188,217 @@ export default {
               });
             })
             .then(function(newEmail) {
-              console.log("email changed in db to ", newEmail);
+              console.log("Updating email. Email changed in db to ", newEmail);
             })
             .catch(function(err) {
               console.error(err);
             });
 
-          console.log("email change succeeded");
+          console.log("Updating email. Email change succeeded");
+
           store.dispatch("fetchUser", fbUser);
-          
+
           this.disableEditEmail = !this.disableEditEmail;
           this.error = "Email successfully changed!";
         })
         .catch(err => {
-          console.log("email change failed");
+          console.log("Updating email. Email change failed");
           this.error = err.message;
+        });
+    },
+    async getUserCameraIds() {
+      var docRef = fb.db.collection("users").doc(this.user.data.uid);
+      var temp = [];
+      var temp2 = [];
+
+      await docRef
+        .get()
+        .then(function(doc) {
+          if (doc.exists) {
+            // console.log(doc.data().cameraIds);
+            temp = doc.data().cameraIds;
+          } else {
+            // doc.data() will be undefined in this case
+            console.log("Getting camera ids. No such document!");
+          }
+        })
+        .catch(function(error) {
+          console.log("Getting camera ids. Error getting document:", error);
+        });
+
+      await fb.db
+        .collection("cameras")
+        .where("user", "==", this.user.data.uid)
+        .get()
+        .then(function(querySnapshot) {
+          querySnapshot.forEach(function(doc) {
+            // doc.data() is never undefined for query doc snapshots
+            // console.log(doc.id, " => ", doc.data());
+            var cameraObject = doc.data();
+            cameraObject.cameraId = doc.id;
+            temp2.push(cameraObject);
+          });
+        })
+        .catch(function(error) {
+          console.log("Error getting documents: ", error);
+        });
+      // console.log(temp2);
+      this.userCameras = temp2;
+    },
+    addUserCamera() {
+      var userId = this.user.data.uid;
+      var temp = [];
+      for (var i = 0; i < this.userCameras.length; i++) {
+        temp.push(this.userCameras[i].cameraId);
+      }
+      var cameraIdToAdd = this.input.cameraId;
+
+      var userDocRef = fb.db.collection("users").doc(userId);
+      var cameraDocRef = fb.db.collection("cameras").doc(cameraIdToAdd);
+
+      cameraDocRef
+        .get()
+        .then(doc => {
+          if (doc.exists) {
+            if (doc.data().user !== "") {
+              // this.error2 = "This camera is already registered to an account.";
+              throw "This camera is already registered to an account.";
+            } else if (doc.data().user === "") {
+              //set uid
+              //add camera to user account
+              fb.db
+                .runTransaction(transaction => {
+                  return transaction.get(cameraDocRef).then(function(doc) {
+                    if (!doc.exists) {
+                      throw "Adding camera. Document does not exist!";
+                    }
+                    transaction.update(cameraDocRef, { user: userId });
+                  });
+                })
+                .then(() => {
+                  console.log(
+                    "Adding camera. Camera successfully reassigned to user."
+                  );
+                })
+                .catch(err => {
+                  console.error(err);
+                  this.error2 = err.message;
+                });
+            }
+          } else {
+            // doc.data() will be undefined in this case
+            // Add a new document in collection "cameras"
+            fb.db
+              .collection("cameras")
+              .doc(cameraIdToAdd)
+              .set({
+                active: false,
+                ready: false,
+                user: userId
+              })
+              .then(function() {
+                console.log(
+                  "Adding camera. Camera document successfully written!"
+                );
+              })
+              .catch(function(error) {
+                console.error(
+                  "Adding camera. Error writing camera document: ",
+                  error
+                );
+                this.error2 = error.message;
+              });
+          }
+          fb.db
+            .runTransaction(transaction => {
+              return transaction.get(userDocRef).then(function(doc) {
+                if (!doc.exists) {
+                  throw "Adding camera. Document does not exist!";
+                }
+                temp.push(cameraIdToAdd);
+                transaction.update(userDocRef, { cameraIds: temp });
+              });
+            })
+            .then(() => {
+              this.addCameraClicked = false;
+              this.input.cameraId = "";
+              console.log("Camera successfully added");
+              this.error2 = "Camera successfully added!";
+            })
+            .catch(err => {
+              console.error(err);
+              this.error2 = err.message;
+            });
+        })
+        .catch(error => {
+          console.log("Adding camera. Error getting camera document:", error);
+          this.error2 = error;
+        });
+    },
+    deleteUserCamera(index) {
+      var temp = [];
+      for (var i = 0; i < this.userCameras.length; i++) {
+        temp.push(this.userCameras[i].cameraId);
+      }
+      var cameraIdToDelete = temp[index];
+
+      var userDocRef = fb.db.collection("users").doc(this.user.data.uid);
+      var cameraDocRef = fb.db.collection("cameras").doc(cameraIdToDelete);
+
+      fb.db
+        .runTransaction(transaction => {
+          return transaction.get(cameraDocRef).then(function(doc) {
+            if (!doc.exists) {
+              throw "Deleting camera. Document does not exist!";
+            }
+            transaction.update(cameraDocRef, { user: "" });
+          });
+        })
+        .then(() => {
+          console.log(
+            "Deleting camera. Camera successfully reassigned from user"
+          );
+          fb.db
+            .runTransaction(transaction => {
+              return transaction.get(userDocRef).then(function(doc) {
+                if (!doc.exists) {
+                  throw "Deleting camera. Document does not exist!";
+                }
+                temp.splice(index, 1);
+                transaction.update(userDocRef, { cameraIds: temp });
+              });
+            })
+            .then(() => {
+              console.log("Camera successfully deleted");
+              this.error2 = "Camera successfully deleted!";
+            })
+            .catch(err => {
+              console.error(err);
+              this.error2 = err.message;
+            });
+        })
+        .catch(err => {
+          console.error(err);
+          this.error2 = err.message;
+        });
+    },
+    toggleActive(cameraId, toggleFrom) {
+      var cameraDocRef = fb.db.collection("cameras").doc(cameraId);
+      fb.db
+        .runTransaction(transaction => {
+          return transaction.get(cameraDocRef).then(function(doc) {
+            if (!doc.exists) {
+              throw "Toogle Active. Document does not exist!";
+            }
+            transaction.update(cameraDocRef, { active: !toggleFrom });
+          });
+        })
+        .then(() => {
+          console.log("Adding camera. Camera successfully reassigned to user.");
+        })
+        .catch(err => {
+          console.error(err);
+          this.error2 = err.message;
         });
     }
   }
