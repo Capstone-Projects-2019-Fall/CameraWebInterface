@@ -1,8 +1,8 @@
 <template>
   <v-app>
     <v-row>
-      <v-col>
-        <v-container >
+    
+        <v-container>
           <v-row>
            <v-col>
               <v-btn small left color="primary" @click="dialog=true">Add New</v-btn>
@@ -17,43 +17,14 @@
 
           <v-dialog
             v-model="dialog"
-            max-width="600">
-            <v-card>
-              <v-card-title>Add New - Enter Name</v-card-title>
-              <v-text-field 
-                v-model="input.name"
-                 :rules="['Required']">
-                Name
-              </v-text-field>
-              <v-card class="mx-auto">
-              <div >
-                 
-                <p>Upload an image:</p>
-                  <input type="file" @change="previewImage" accept="image/jpeg" >
-              </div>
-                 <div>
-      
-               <v-progress-linear
-                  v-model="uploadValue"
-                  color="indigo darken-2"
-                  ></v-progress-linear>
-        
-                </div>
-                <div v-if="imageData!=null">
-                <img class="preview" :src="picture">
-                  <br>
-                </div>
-                    </v-card> 
-                  <v-card-actions>
-                  <v-btn small left color="primary" :disabled="!input.name" @click.prevent="onUpload">Add</v-btn>
-                  </v-card-actions>
-                  </v-card>
-            </v-dialog>
 
-        
-         
+            max-width="1000px">
+
+            <AddFace v-on:addedImage="onClickAdd()" />
+            </v-dialog>
+                 
         </v-container>
-      </v-col>
+     
       
 
     </v-row>
@@ -65,24 +36,22 @@
 
 
 <script>
+
 import { async } from 'q';
 const fb = require("../firebaseConfig.js");
 import { mapGetters } from "vuex";
 import store from "../store";
 import FaceCard from "../components/FaceCard"
+import AddFace from "../components/AddFace"
 
 export default {
   name: 'Upload',
-  components: {  FaceCard },
+  components: {  FaceCard, AddFace },
   data: function() {	  
     return{
       items: [],
-      imageData: null,
-      picture: null,
-      uploadValue: 0,
-      input: {
-        name: "",
-       },
+      fileNames: [],
+    
       dialog:false,
       disabled: null,
       childMsg: ""
@@ -101,37 +70,15 @@ export default {
     });
   },
   methods:{
-    onChildClick(value){
-      console.log(value);
-      console.log("child was clicked");
-    },
-    previewImage(event) {
-      this.uploadValue=0;
-      this.picture=null;
-      this.imageData = event.target.files[0];
-    },
-
-    onUpload(){
-      this.picture=null;
-      var childRef = fb.storageRef.child(this.user.data.uid+"/training/"+this.input.name+".jpg").put(this.imageData);
-      childRef.on(`state_changed`,snapshot=>{
-        this.uploadValue = (snapshot.bytesTransferred/snapshot.totalBytes)*100;
-      }, error=>{console.log(error.message)},
-      ()=>{this.uploadValue=100;
-        childRef.snapshot.ref.getDownloadURL().then((url)=>{
-          this.picture =url;
-          this.updateList();
-          this.dialog = false;
-        });
-      }
-      );
- 
-   
+    onClickAdd(){
+      this.dialog = false;
+      this.updateList();
     },
 
     async updateList(){
       this.items = [];
       var childRef = fb.storageRef.child(this.user.data.uid+"/training/");
+      //var filesArray = fb.db.collection("users").doc(this.user.data.uid);
       console.log(childRef);
        await childRef.listAll().then(result => {
            result.items.forEach(async folderRef => {
@@ -153,11 +100,15 @@ export default {
               .catch(function(error) {
               // Uh-oh, an error occurred!
             });
-            
+            this.fileNames.push(item.name);
             this.items.push(item);
+                              // fb.db.collection("users").doc(this.user.data.uid).update({familiarFaces: this.fileNames});
+
           });
-      
+         
+
        });
+      
       }
   }
 }

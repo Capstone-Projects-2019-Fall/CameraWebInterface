@@ -1,15 +1,21 @@
 <template>
-  <v-card height="300px" width="300px">
-      <v-card-subtitle>{{image}}</v-card-subtitle>
-      <v-img max-width="200px" max-height="200px" :src="imageURL"></v-img>
-      <v-card-actions>
+  <v-card height="300px" width="300px" >
+      <v-card-subtitle class="cyan darken-1 font-weight-black">{{image}} </v-card-subtitle>
+       <v-card-actions>
         <v-btn small color="error" @click="deleteImage">Delete</v-btn>
        </v-card-actions>
+
+      <v-img max-width="200px" max-height="200px" :src="imageURL"></v-img>
+
   </v-card>
 </template>
 
 <script>
 const fb = require("../firebaseConfig.js");
+import { mapGetters } from "vuex";
+import store from "../store";
+import firebase from 'firebase';
+
 export default {
   
     name: "FaceCard",
@@ -27,19 +33,29 @@ export default {
             default: ""
         }
     },
-
+    computed: {
+    // map `this.user` to `this.$store.getters.user`
+    ...mapGetters({
+      user: "user"
+    })
+  },
     methods: {
         async deleteImage(event){
           // Create a reference to the file to delete
         var desertRef = fb.storageRef.child(this.imagePath);
+        var filesArray = fb.db.collection("users").doc(this.user.data.uid);
 
         // Delete the file
         await desertRef.delete().then(function() {
-            
+            console.log(this.image);
+           
             // File deleted successfully
         }).catch(function(error) {
             // Uh-oh, an error occurred!
         });  
+        await filesArray.update({
+                familiarFaces: firebase.firestore.FieldValue.arrayRemove(this.image)
+        });
         this.$emit('deletedImage');
         }
         
