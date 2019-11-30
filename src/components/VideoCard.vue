@@ -4,10 +4,7 @@
           <v-img :src="imageURL"/>
       </div>
       <div v-else>
-        <video v-if="isMobile" ref="vid" id="myVideo" controls type="video/mp4" width="200" :src = "videoURL">
-          Sorry, your browser doesn't support embedded videos.
-        </video>
-          <video v-else ref="vid" id="myVideo" controls type="video/mp4" width="800" :src = "videoURL">
+        <video ref="vid" id="myVideo" controls type="video/mp4" width="800" :src = "videoURL">
           Sorry, your browser doesn't support embedded videos.
         </video>
       </div>
@@ -38,18 +35,13 @@ export default {
       isMobile: false
 		};
   },
-  mounted () {
-    this.onResize()
-    window.addEventListener('resize', this.onResize, { passive: true })
-  },
-  methods: {
-    onResize () {
-      this.isMobile = window.innerWidth < 600
-        },
+
+   methods: {
     changeRate(rate) {
-      this.$refs.vid.playbackRate = rate;
+    this.$refs.vid.playbackRate = rate;
     },
     updateVideo: async function () {
+     
       var childRef = fb.storageRef.child(this.getVideoName(this.name));
       await childRef.getDownloadURL()
               .then(async fileURL => {
@@ -69,15 +61,10 @@ export default {
         return videoAddress;
     }
   },
-  beforeDestroy () {
-    if (typeof window !== 'undefined') {
-      window.removeEventListener('resize', this.onResize, { passive: true })
-    }
-  },
   async created () {
     await this.updateVideo();
     if(this.videoURL != "")
-      this.changeRate(0.3);
+      this.changeRate(0.7);
     //console.log(this.videoURL);
   },
   computed: {
@@ -86,7 +73,6 @@ export default {
       user: "user"
     })
   }
-  
 };
 
 </script>
