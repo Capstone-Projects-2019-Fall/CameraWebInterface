@@ -40,7 +40,9 @@
                           <p>  Upload an image: </p>
                         </v-col>
                            <v-col sm="2">
-                        <input type="file" @change="previewImage" accept="image/jpeg" >
+
+                        <input type="file" ref="imageUpload" @change="previewImage" accept="image/jpeg" >
+
                          </v-col>
                     </v-row>
                     <v-row>
@@ -101,6 +103,8 @@
 const fb = require("../firebaseConfig.js");
 import { mapGetters } from "vuex";
 import store from "../store";
+import firebase from 'firebase';
+
 
 export default {
     name: "AddFace",
@@ -113,9 +117,11 @@ export default {
             input: {
                 name: null
             },
-                video: {
-                    src: ""
-                },
+
+            video: {
+                src: ""
+            },
+
             canvas: {},
             captures: "",
             stream: null,
@@ -169,14 +175,23 @@ export default {
         },
         async onUploadWebcam(){
             this.picture=null;
+            var filesArray =fb.db.collection("users").doc(this.user.data.uid);
             var childRef = fb.storageRef.child(this.user.data.uid+"/training/"+this.input.name+".jpg").putString(this.captures.split(',')[1], "base64", {contentType:"image/jpg"});
             await childRef.on(`state_changed`,snapshot=>{
             this.uploadValue = (snapshot.bytesTransferred/snapshot.totalBytes)*100;
             }, error=>{console.log(error.message)},
             ()=>{this.uploadValue=100;
                 childRef.snapshot.ref.getDownloadURL().then((url)=>{
-                this.picture =url;
+
+                filesArray.update({
+                familiarFaces: firebase.firestore.FieldValue.arrayUnion(this.input.name+".jpg")
+                });
                 this.input.name=null;
+                this.$refs.video.srcObject = null;
+                   this.canvas = this.$refs.canvas;
+                    const context = this.canvas.getContext('2d');
+                    context.clearRect(0, 0, 640, 480);
+
                 this.$emit('addedImage');
                 });
             }
@@ -185,16 +200,23 @@ export default {
         },
         async onUploadFile(){
             this.picture=null;
+            var filesArray = fb.db.collection("users").doc(this.user.data.uid);
+
             var childRef = fb.storageRef.child(this.user.data.uid+"/training/"+this.input.name+".jpg").put(this.imageData);
             await childRef.on(`state_changed`,snapshot=>{
             this.uploadValue = (snapshot.bytesTransferred/snapshot.totalBytes)*100;
             }, error=>{console.log(error.message)},
             ()=>{this.uploadValue=100;
                 childRef.snapshot.ref.getDownloadURL().then((url)=>{
-                this.picture =url;
-                this.input.name=null;
-                this.picture=null;
-                this.$emit('addedImage');
+
+                    filesArray.update({
+                        familiarFaces: firebase.firestore.FieldValue.arrayUnion(this.input.name+".jpg")
+                    });
+                    this.input.name=null;
+                    this.picture=null;
+                    this.$refs.imageUpload.value = null;
+                    this.$emit('addedImage');
+
             });
             }
             );
@@ -205,7 +227,8 @@ export default {
             if(this.isMobile)
                 var context = this.canvas.getContext("2d").drawImage(this.video, 0, 0, 320, 240);
             else
-            var context = this.canvas.getContext("2d").drawImage(this.video, 0, 0, 640, 480);
+                var context = this.canvas.getContext("2d").drawImage(this.video, 0, 0, 640, 480);
+
             this.captures = (canvas.toDataURL("image/jpeg", 0.8));
         }
 

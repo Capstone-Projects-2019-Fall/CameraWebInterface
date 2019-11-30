@@ -17,7 +17,9 @@
 
           <v-dialog
             v-model="dialog"
-            max-width="6550px">
+
+            max-width="1000px">
+
             <AddFace v-on:addedImage="onClickAdd()" />
             </v-dialog>
                  
@@ -48,7 +50,8 @@ export default {
   data: function() {	  
     return{
       items: [],
-     
+      fileNames: [],
+    
       dialog:false,
       disabled: null,
       childMsg: ""
@@ -75,6 +78,7 @@ export default {
     async updateList(){
       this.items = [];
       var childRef = fb.storageRef.child(this.user.data.uid+"/training/");
+      //var filesArray = fb.db.collection("users").doc(this.user.data.uid);
       console.log(childRef);
        await childRef.listAll().then(result => {
            result.items.forEach(async folderRef => {
@@ -96,11 +100,15 @@ export default {
               .catch(function(error) {
               // Uh-oh, an error occurred!
             });
-            
+            this.fileNames.push(item.name);
             this.items.push(item);
+                              // fb.db.collection("users").doc(this.user.data.uid).update({familiarFaces: this.fileNames});
+
           });
-      
+         
+
        });
+      
       }
   }
 }
