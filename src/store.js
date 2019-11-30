@@ -1,16 +1,28 @@
 import Vue from "vue";
 import Vuex from "vuex";
+const fb = require('./firebaseConfig.js')
 Vue.use(Vuex);
 export default new Vuex.Store({
   state: {
     user: {
       loggedIn: false,
-      data: null
+      data: {
+        uid: "",
+        displayName: "",
+        email: ""
+      },
+      cameraIds: []
     }
   },
   getters: {
-    user(state){
-      return state.user
+    user(state) {
+      return state.user;
+    },
+    cameraIds(state) {
+      return state.user.cameraIds;
+    },
+    uid(state){
+      return state.user.data.uid;
     }
   },
   mutations: {
@@ -19,7 +31,24 @@ export default new Vuex.Store({
     },
     SET_USER(state, data) {
       state.user.data = data;
+
+      if (data != null) {
+        fb.db.collection("users")
+          .doc(state.user.data.uid)
+          .get()
+          .then(function(doc) {
+            if (doc.exists) {
+                state.user.cameraIds = doc.data().cameraIds;
+            } else {
+                // doc.data() will be undefined in this case
+                console.log("No such document!");
+            }
+        }).catch(function(error) {
+            console.log("Error getting document:", error);
+        });
+      }
     }
+
   },
   actions: {
     fetchUser({ commit }, user) {
