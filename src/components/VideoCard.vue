@@ -31,7 +31,8 @@ export default {
   },
 	data() {
 		return {
-      videoURL: ''
+      videoURL: '',
+      isMobile: false
 		};
   },
 
@@ -63,7 +64,7 @@ export default {
   async created () {
     await this.updateVideo();
     if(this.videoURL != "")
-      this.changeRate(0.3);
+      this.changeRate(0.7);
     //console.log(this.videoURL);
   },
   computed: {
