@@ -1,8 +1,11 @@
 import Vue from "vue";
 import Vuex from "vuex";
 const fb = require('./firebaseConfig.js')
+import createPersistedState from "vuex-persistedstate";
+
 Vue.use(Vuex);
 export default new Vuex.Store({
+  plugins: [createPersistedState()],
   state: {
     user: {
       loggedIn: false,
@@ -13,6 +16,7 @@ export default new Vuex.Store({
       },
       cameraIds: []
     }
+   
   },
   getters: {
     user(state) {
