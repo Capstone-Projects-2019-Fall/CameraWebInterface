@@ -1,45 +1,108 @@
 <template>
   <v-container class="home">
-    <v-row>
-      <v-col align="center">
-        <h1>MSPi</h1>
-      </v-col>
-    </v-row>
-    <v-row>
-      <v-col class="md4">
-      </v-col>
-      <v-col class="md4">
-        <v-img src="../assets/mspi.png"
-          max-height="200px"
+ 
+    <v-row class="pb-3">
+     
+      <v-card  >
+          <v-card-title class="cyan">What is MSPi?</v-card-title>
+          <v-row>
+            <v-col sm="2">
+              <v-img src="../assets/mspi.png"
+          max-height="50%"
           contain
+          
         ></v-img>
-      </v-col>
-      <v-col class="md4">
-      </v-col>
-    </v-row>
-    
-    <v-row>
-      <v-col align="center">
-        <v-card>
-          <v-card-title>What is MSPi?</v-card-title>
-          <v-card-text>
-            <p>MSPi is a motion-capture security camera that provides users with live alerts as to what
-      occurs within and around their home. The target audience for this device is mainly suburban
-      and urban home owners as well as frequent Amazon shoppers. This device aims to protect
-      against porch pirates and unwanted intruders by taking advantage of a miniature computer
-      referred to as a Raspberry Pi. The Raspberry Pi will be loaded with Raspbian OS and run
-      Python Scripts that utilize the OpenCV (Open Source Computer Vision) library. MSPi is
-      mountable outside of the customer’s door, or anywhere within their home, and serves to detect
-      human-body shaped motion. Furthermore, it uses facial recognition to identify frequent visitors
-      such as users and their family members. The device will also be equipped with a microphone
-      along with speakers to allow two-way communication between the customer those on-camera.
-      Communication is facilitated using either a mobile application or a web application. The data is
-      streamed from the user’s local network to Firebase via UV4L Audio/Video Streaming. We will
-      then pull the data from Firebase to allow access from our web and mobile applications which in
-      turn can fulfill other requirements such as sending emails and notifications.</p>
+            </v-col>
+            <v-col sm="10">
+          <v-card-text >
+            MSPi is a motion-capture security camera that provides users with live alerts as to what
+              occurs within and around their home. The target audience for this device is mainly suburban
+              and urban home owners as well as frequent Amazon shoppers. 
           </v-card-text>
-        </v-card>
-      </v-col>
-    </v-row>
+        </v-col>
+        </v-row>
+      </v-card>
+  </v-row>
+
+
+  <v-row class="pb-3">
+    
+    <v-card>
+      <v-card-title class="cyan">Features</v-card-title>
+    
+      <v-row>
+
+        <v-col sm="4">
+          <v-card flat>
+            <v-card-title class="justify-center"><v-icon large>mdi-cctv</v-icon></v-card-title>
+            <v-card-text class="black--text">
+              Add mutiple cameras to your account to monitor multiple spots around your home.
+            </v-card-text>
+          </v-card>
+        </v-col>
+
+        <v-col sm="4">
+          <v-card flat>
+            <v-card-title class="justify-center"><v-icon large>mdi-face</v-icon></v-card-title>
+            <v-card-text class="black--text">
+              Equipped with training module, the system allows you to train it to recognize multiple faces. 
+              Know when your loved ones return home.
+            </v-card-text>
+          </v-card>
+        </v-col>
+
+        <v-col sm="4">
+          <v-card flat>
+            <v-card-title class="justify-center"><v-icon large>mdi-motion-sensor</v-icon></v-card-title>
+            <v-card-text class="black--text">
+              The system enabled with motion and human shape detection, so you only get notified when a person
+              approaches your home.
+            </v-card-text>
+          </v-card>
+        </v-col>
+
+      </v-row>
+
+      <v-row>
+
+        <v-col sm="4">
+          <v-card flat>
+            <v-card-title class="justify-center"><v-icon large>mdi-bell-ring</v-icon></v-card-title>
+            <v-card-text class="black--text">
+              Get a notification via email when someone approches your home and view all of you notifications
+              via website or mobile application.
+            </v-card-text>
+          </v-card>
+        </v-col>
+
+        <v-col sm="4">
+          <v-card flat >
+            <v-card-title class="justify-center"><v-icon large>mdi-microphone</v-icon></v-card-title>
+            <v-card-text class="black--text">
+              Communicate with the person at your doorstep using two-way communication feature via website or mobile application.
+            </v-card-text>
+          </v-card>
+        </v-col>
+
+        <v-col sm="4">
+          <v-card flat >
+            <v-card-title class="justify-center"><v-icon large>mdi-monitor-cellphone</v-icon></v-card-title>
+            <v-card-text class="black--text">
+              Monitor your home at any time using live video streaming. Connect via website or mobile application. 
+            </v-card-text>
+          </v-card>
+        </v-col>
+      </v-row>
+
+    </v-card>
+  </v-row>
+
+   
+  
+
+    
+
+
   </v-container>
 </template>
+
