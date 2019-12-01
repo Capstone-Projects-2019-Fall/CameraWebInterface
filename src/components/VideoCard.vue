@@ -4,7 +4,7 @@
           <v-img :src="imageURL"/>
       </div>
       <div v-else>
-        <video ref="vid" id="myVideo" controls type="video/mp4" width="800" :src = "videoURL">
+        <video ref="vid" id="myVideo" controls type="video/mp4" width="100%" :src = "videoURL">
           Sorry, your browser doesn't support embedded videos.
         </video>
       </div>
