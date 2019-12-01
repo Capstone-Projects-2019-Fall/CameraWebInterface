@@ -154,13 +154,13 @@ export default {
       }
     });
   },
-  updated: function() {
-    this.$nextTick(function() {
-      if (this.user.data) {
-        this.getUserCameraIds();
-      }
-    });
-  },
+  // updated: function() {
+  //   this.$nextTick(function() {
+  //     if (this.user.data) {
+  //       this.getUserCameraIds();
+  //     }
+  //   });
+  // },
   methods: {
     editEmail() {
       this.disableEditEmail = !this.disableEditEmail;
@@ -208,30 +208,30 @@ export default {
     },
     async getUserCameraIds() {
       var docRef = fb.db.collection("users").doc(this.user.data.uid);
-      var temp = [];
+      // var temp = [];
       var temp2 = [];
 
-      await docRef
-        .get()
-        .then(function(doc) {
-          if (doc.exists) {
-            // console.log(doc.data().cameraIds);
-            temp = doc.data().cameraIds;
-          } else {
-            // doc.data() will be undefined in this case
-            console.log("Getting camera ids. No such document!");
-          }
-        })
-        .catch(function(error) {
-          console.log("Getting camera ids. Error getting document:", error);
-        });
+      // await docRef
+      //   .get()
+      //   .then(function(doc) {
+      //     if (doc.exists) {
+      //       // console.log(doc.data().cameraIds);
+      //       temp = doc.data().cameraIds;
+      //     } else {
+      //       // doc.data() will be undefined in this case
+      //       console.log("Getting camera ids. No such document!");
+      //     }
+      //   })
+      //   .catch(function(error) {
+      //     console.log("Getting camera ids. Error getting document:", error);
+      //   });
 
       await fb.db
         .collection("cameras")
         .where("user", "==", this.user.data.uid)
         .get()
-        .then(function(querySnapshot) {
-          querySnapshot.forEach(function(doc) {
+        .then(querySnapshot => {
+          querySnapshot.forEach(doc => {
             // doc.data() is never undefined for query doc snapshots
             // console.log(doc.id, " => ", doc.data());
             var cameraObject = doc.data();
@@ -239,8 +239,8 @@ export default {
             temp2.push(cameraObject);
           });
         })
-        .catch(function(error) {
-          console.log("Error getting documents: ", error);
+        .catch(error => {
+          console.log("Error getting camera documents in getUserCameraIds: ", error);
         });
       // console.log(temp2);
       this.userCameras = temp2;
@@ -324,6 +324,8 @@ export default {
               this.input.cameraId = "";
               console.log("Camera successfully added");
               this.error2 = "Camera successfully added!";
+
+              this.getUserCameraIds();
             })
             .catch(err => {
               console.error(err);
@@ -371,6 +373,8 @@ export default {
             .then(() => {
               console.log("Camera successfully deleted");
               this.error2 = "Camera successfully deleted!";
+
+              this.getUserCameraIds();
             })
             .catch(err => {
               console.error(err);
@@ -394,7 +398,8 @@ export default {
           });
         })
         .then(() => {
-          console.log("Adding camera. Camera successfully reassigned to user.");
+          this.getUserCameraIds();
+          console.log("Toggle Active. Camera successfully toggled.");
         })
         .catch(err => {
           console.error(err);
