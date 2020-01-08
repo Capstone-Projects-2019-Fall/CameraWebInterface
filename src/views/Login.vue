@@ -9,7 +9,7 @@
   </div>-->
   <div class="container">
     <v-row>
-      <v-col sm="4"></v-col>
+      <v-col sm="1" md="4"></v-col>
       <v-col>
         <v-card>
           <v-card-title>Login</v-card-title>
@@ -53,7 +53,7 @@
           </v-card-text>
         </v-card>
       </v-col>
-      <v-col sm="4"></v-col>
+      <v-col sm="1" md="4"></v-col>
     </v-row>
   </div>
 </template>
