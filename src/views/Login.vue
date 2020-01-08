@@ -8,9 +8,9 @@
     <button class="cyan darken-1" type="button" v-on:click="login()">Login</button>
   </div>-->
   <div class="container">
-    <v-row>
-      <v-col sm="1" md="4"></v-col>
-      <v-col>
+    <v-row justify="center">
+      <v-spacer></v-spacer>
+      <v-col cols="auto" sm="12" md="6" lg="4">
         <v-card>
           <v-card-title>Login</v-card-title>
           <v-card-text>
@@ -53,7 +53,7 @@
           </v-card-text>
         </v-card>
       </v-col>
-      <v-col sm="1" md="4"></v-col>
+      <v-spacer></v-spacer>
     </v-row>
   </div>
 </template>

@@ -17,7 +17,7 @@
               </v-col>
               <v-col cols="auto" md="9">
                 <v-card-text>
-                  <p class="headline">
+                  <p class="headline" style="text-align: justify;">
                     MSPi is a motion-capture security camera that provides users
                     with live alerts as to what occurs within and around their
                     home. The target audience for this device is mainly suburban
